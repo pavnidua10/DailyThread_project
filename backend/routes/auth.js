@@ -12,7 +12,6 @@ router.get('/me', protect, (req, res) => {
   router.post('/follow', protect, followUser);
 router.post('/unfollow', protect, unfollowUser);
 router.get('/search', searchUsers);
-
-router.get('/:id', getUser);
 router.get('/profile/:id', getUserProfile);
+router.get('/:id', getUser);
 export default router;

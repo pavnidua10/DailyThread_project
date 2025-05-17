@@ -18,12 +18,11 @@ const router = express.Router();
 router.get('/search', searchCommunities);
 router.post('/join', protect, joinCommunity);
 router.post('/leave', protect, leaveCommunity);
-router.get('/:id', getCommunity);
 router.post('/:id/articles', protect, addArticleToCommunity);
 router.post('/create',protect,createCommunity)
 router.post('/:id/invite', protect, inviteToCommunity);
 router.post('/:communityId/share-article', protect, shareArticleToCommunity);
 router.get('/:id/discussions', getDiscussions);
 router.post('/:id/discussions', protect, postDiscussion);
-
+router.get('/:id', getCommunity);
 export default router;
