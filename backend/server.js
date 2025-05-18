@@ -22,7 +22,7 @@ const port = process.env.PORT || 5001;
 
 
 app.use(cors({
-  origin: "http://localhost:5173", 
+  origin:["http://localhost:5173", "https://dailythread-project-1.onrender.com"],
   credentials: true 
 }));
 
@@ -43,13 +43,6 @@ app.use("/discussions", discussionsRoutes);
 app.use("/profiles", profilesRoutes);
 app.use("/community", communityRoutes);
 
-
-// const frontendPath = path.resolve(__dirname, "../frontend/build");
-// app.use(express.static(frontendPath));
-
-// app.get("*", (req, res) => {
-//   res.sendFile(path.join(frontendPath, "index.html"));
-// });
 
 
 app.listen(port, () => {
