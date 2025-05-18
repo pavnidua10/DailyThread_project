@@ -38,8 +38,9 @@
   - Title
   - Content
   - Category
+  -  source
   - Optional image
-  - Optional resource link
+
 
 ### 👤 Profile Page
 - Edit name and bio.
