@@ -1,9 +1,13 @@
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import SignOutButton from '../components/signout';
 import { useUser } from '../Context/UserContext'; 
 import ArticleCard from '../components/ArticleCard'; 
 import FullArticleModal from '../components/ArticleDetails'; 
+
+
+export let refreshMyProfile = () => {};
 
 const ProfilePage = () => {
   const { user, setUser } = useUser(); 
@@ -22,30 +26,38 @@ const ProfilePage = () => {
   const [savedArticles, setSavedArticles] = useState([]);
   const [fullArticle, setFullArticle] = useState(null);
 
+ 
+  const fetchMyProfile = async () => {
+    try {
+      setLoading(true);
+      const [profileRes, articlesRes, savedRes] = await Promise.all([
+        axios.get('/profiles/me'),
+        axios.get('/articles/articles/by-author'),
+        axios.get('/articles/articles/saved'),
+      ]);
+      
+
+      setProfile({
+        name: profileRes.data.name,
+        bio: profileRes.data.bio,
+        email: profileRes.data.email,
+        followers: profileRes.data.followers || [],
+        following: profileRes.data.following || [],
+      });
+      setArticles(articlesRes.data);
+      setSavedArticles(savedRes.data);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  refreshMyProfile = fetchMyProfile;
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [profileRes, articlesRes, savedRes] = await Promise.all([
-          axios.get('/profiles/me'),
-          axios.get('/articles/articles/by-author'),
-          axios.get('/articles/articles/saved'),
-        ]);
-        setProfile({
-          name: profileRes.data.name,
-          bio: profileRes.data.bio,
-          email: profileRes.data.email,
-          followers: profileRes.data.followers || [],
-          following: profileRes.data.following || [],
-        });
-        setArticles(articlesRes.data);
-        setSavedArticles(savedRes.data);
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchMyProfile();
   }, []);
 
   const handleChange = (e) => {
@@ -58,6 +70,7 @@ const ProfilePage = () => {
       await axios.put('/profiles/profile', profile);
       setMessage('Profile updated successfully!');
       setIsEditing(false);
+      fetchMyProfile(); 
     } catch (error) {
       console.error('Error updating profile:', error);
       setMessage('Failed to update profile.');
@@ -65,10 +78,9 @@ const ProfilePage = () => {
   };
 
   const handleSignOut = () => {
-    setUser(null); // Clear user from context
+    setUser(null); 
   };
 
-  // Refresh saved articles after save/unsave
   const handleArticleSaveToggle = async () => {
     try {
       const savedRes = await axios.get('/articles/articles/saved');

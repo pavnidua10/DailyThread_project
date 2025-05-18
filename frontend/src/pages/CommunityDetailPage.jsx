@@ -39,7 +39,7 @@ const CommunityDetailPage = ({ currentUserId }) => {
   }, [id, currentUserId]);
 
   const fetchCommunity = async () => {
-    const res = await axios.get(`/community/${id}`);
+    const res = await axios.get(`/community/community/${id}`);
     setCommunity(res.data.community);
     setArticles(res.data.articles);
     setIsMember(res.data.community.members.some(m => m._id === currentUserId));
@@ -57,7 +57,7 @@ const CommunityDetailPage = ({ currentUserId }) => {
 
   const handleJoin = async () => {
     await axios.post('/community/join', { communityId: id });
-    navigate(`/communities/${id}`);
+   
     setIsMember(true);
     fetchCommunity();
   };

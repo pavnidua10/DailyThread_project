@@ -24,5 +24,5 @@ router.post('/:id/invite', protect, inviteToCommunity);
 router.post('/:communityId/share-article', protect, shareArticleToCommunity);
 router.get('/:id/discussions', getDiscussions);
 router.post('/:id/discussions', protect, postDiscussion);
-router.get('/:id', getCommunity);
+router.get('/community/:id', getCommunity);
 export default router;

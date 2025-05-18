@@ -38,6 +38,8 @@ export const getMyProfile = async (req, res) => {
     return res.status(200).json({
       ...profile.toObject(),
       email: user.email, 
+       followers: user.followers || [],
+      following: user.following || [],
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });

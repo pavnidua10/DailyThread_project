@@ -12,10 +12,7 @@ const ArticleReview = ({ articleId, authorId }) => {
   const [loading, setLoading] = useState(true);
 
   const isAuthor = user?._id === authorId;
-// router.get(' /:articleId/reviews/me',protect,getMyReview)
-// router.post('/review',protect, submitOrUpdateReview);
-// router.get('/:articleId/reviews',protect, getReviews);
-  
+
   const fetchReviews = async () => {
     setLoading(true);
     try {

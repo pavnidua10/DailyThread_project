@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import ArticleCard from './ArticleCard';
 import FullArticleModal from './ArticleDetails';
+import { refreshMyProfile } from '../pages/ProfileSetupPage'; 
 
 const UserProfile = ({ userId, currentUserId }) => {
   const [profile, setProfile] = useState(null);
@@ -12,49 +13,57 @@ const UserProfile = ({ userId, currentUserId }) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
 
+ 
+  const fetchProfile = async () => {
+    try {
+      const profileRes = await axios.get(`/auth/profile/${userId}`);
+      setProfile(profileRes.data);
+
+     const following = profileRes.data.followers?.includes(currentUserId);
+
+      setIsFollowing(following);
+      setFollowersCount(profileRes.data.followers?.length || 0);
+    } catch (error) {
+      setProfile(null);
+    }
+  };
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const profileRes = await axios.get(`/auth/profile/${userId}`);
-        setProfile(profileRes.data);
-
-     
-        const following = profileRes.data.followers?.some(follower => follower._id === currentUserId);
-        setIsFollowing(following);
-        setFollowersCount(profileRes.data.followers?.length || 0);
-
-
-        const articlesRes = await axios.get(`/articles/articles/by-author`, {
-          params: { userId }
-        });
-        setArticles(articlesRes.data);
-      } catch (error) {
-        setProfile(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfile();
+    setLoading(true);
+    Promise.all([
+      fetchProfile(),
+      axios
+        .get(`/articles/articles/by-author`, { params: { userId } })
+        .then(articlesRes => setArticles(articlesRes.data))
+        .catch(() => setArticles([]))
+    ]).finally(() => setLoading(false));
   }, [userId, currentUserId]);
+
 
   const handleFollowToggle = async () => {
     try {
       if (isFollowing) {
         await axios.post('/auth/unfollow', { userId });
-        setIsFollowing(false);
+        setIsFollowing(false); 
         setFollowersCount(count => count - 1);
       } else {
         await axios.post('/auth/follow', { userId });
-        setIsFollowing(true);
+        setIsFollowing(true); 
         setFollowersCount(count => count + 1);
+      }
+      fetchProfile();        
+      if (typeof refreshMyProfile === 'function') {
+        refreshMyProfile();    
       }
     } catch (error) {
       console.error('Follow/unfollow failed', error);
     }
   };
 
-  if (loading) return <div className="text-center text-xl mt-10">Loading profile...</div>;
-  if (!profile) return <div className="text-center text-xl mt-10">User not found.</div>;
+  if (loading)
+    return <div className="text-center text-xl mt-10">Loading profile...</div>;
+  if (!profile)
+    return <div className="text-center text-xl mt-10">User not found.</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-xl">
@@ -73,8 +82,10 @@ const UserProfile = ({ userId, currentUserId }) => {
             {userId !== currentUserId && (
               <button
                 onClick={handleFollowToggle}
-                className={`px-4 py-2 rounded ${
-                  isFollowing ? 'bg-gray-300 text-gray-700' : 'bg-blue-600 text-white'
+                className={`px-4 py-2 rounded transition ${
+                  isFollowing
+                    ? 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
               >
                 {isFollowing ? 'Unfollow' : 'Follow'}
@@ -126,7 +137,9 @@ const UserProfile = ({ userId, currentUserId }) => {
 
       {/* Articles Display */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {articles.length === 0 && <p className="text-gray-500">No articles yet.</p>}
+        {articles.length === 0 && (
+          <p className="text-gray-500">No articles yet.</p>
+        )}
         {articles.map(article => (
           <ArticleCard
             key={article._id}
@@ -149,3 +162,4 @@ const UserProfile = ({ userId, currentUserId }) => {
 };
 
 export default UserProfile;
+

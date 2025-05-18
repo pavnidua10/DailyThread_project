@@ -24,11 +24,11 @@ const ArticleDiscussion = ({ articleId }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Fetch comments for the article
+
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const res = await axios.get(`/discussions/${articleId}`, { withCredentials: true });
+        const res = await axios.get(`/discussions/article/${articleId}`, { withCredentials: true });
         setComments(res.data);
       } catch (err) {
         setComments([]);
@@ -39,46 +39,44 @@ const ArticleDiscussion = ({ articleId }) => {
     fetchComments();
   }, [articleId]);
 
-  // Handle new top-level comment
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
       await axios.post(
-        `/discussions/${articleId}`,
+        `/discussions/article/${articleId}`,
         { content: comment },
         { withCredentials: true }
       );
       setComment('');
-      // Refresh comments
-      const res = await axios.get(`/discussions/${articleId}`, { withCredentials: true });
+     
+      const res = await axios.get(`/discussions/article/${articleId}`, { withCredentials: true });
       setComments(res.data);
     } catch (err) {
       setError('Failed to post comment. Are you logged in?');
     }
   };
 
-  // Handle reply submission
   const handleReplySubmit = async (e, parentId) => {
     e.preventDefault();
     setError('');
     try {
       await axios.post(
-        `/discussions/${articleId}`,
+        `/discussions/article/${articleId}`,
         { content: replyContent, parentId },
         { withCredentials: true }
       );
       setReplyContent('');
       setReplyingTo(null);
-      // Refresh comments
-      const res = await axios.get(`/discussions/${articleId}`, { withCredentials: true });
+      
+      const res = await axios.get(`/discussions/article/${articleId}`, { withCredentials: true });
       setComments(res.data);
     } catch (err) {
       setError('Failed to post reply. Are you logged in?');
     }
   };
 
-  // Recursive rendering of comments and replies
+  
   const renderComments = (commentsTree) => (
     commentsTree.map((c) => (
       <div key={c._id} className="mb-2 ml-0 md:ml-4 p-2 border rounded">
@@ -120,7 +118,7 @@ const ArticleDiscussion = ({ articleId }) => {
             </div>
           </form>
         )}
-        {/* Render replies recursively */}
+        
         {c.replies && c.replies.length > 0 && (
           <div className="ml-4 mt-2">
             {renderComments(c.replies)}
@@ -130,7 +128,6 @@ const ArticleDiscussion = ({ articleId }) => {
     ))
   );
 
-  // Build nested comment tree
   const commentsTree = buildCommentTree(comments);
 
   return (

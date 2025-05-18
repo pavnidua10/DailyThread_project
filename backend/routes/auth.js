@@ -13,5 +13,5 @@ router.get('/me', protect, (req, res) => {
 router.post('/unfollow', protect, unfollowUser);
 router.get('/search', searchUsers);
 router.get('/profile/:id', getUserProfile);
-router.get('/:id', getUser);
+router.get('/user/:id', getUser);
 export default router;

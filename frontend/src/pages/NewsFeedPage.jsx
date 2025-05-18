@@ -53,11 +53,10 @@ const NewsFeedPage = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const { user } = useUser(); // Uncomment if you have user context
-  const currentUserId = user?._id; // Or get current user ID as per your auth setup
+  const { user } = useUser(); 
+  const currentUserId = user?._id; 
 
 
-  // Helper to convert state to NewsData.io region format
   const getRegionParam = (stateName) => {
     if (!stateName) return "";
     return `${stateName.toLowerCase().replace(/\s+/g, "-")}-india`;
@@ -99,10 +98,10 @@ const NewsFeedPage = () => {
 
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line
+   
   }, [selectedCategory, selectedRegion, selectedState, selectedTopic, searchKeyword, activeTab]);
 
-  // Render news cards using ArticleCard
+ 
   const renderArticles = () => {
     if (loading) return <p>Loading...</p>;
     if (!articles.length) return <p>No articles found.</p>;
@@ -142,7 +141,7 @@ const NewsFeedPage = () => {
         ))}
       </div>
 
-      {/* Keyword Search */}
+     
       <div className="mb-4">
         <input
           type="text"
@@ -153,7 +152,7 @@ const NewsFeedPage = () => {
         />
       </div>
 
-      {/* Mood-based Prompts */}
+      
       <div className="flex gap-2 flex-wrap mb-4">
         {moodPrompts.map((mood) => (
           <button
@@ -169,7 +168,7 @@ const NewsFeedPage = () => {
         ))}
       </div>
 
-      {/* Filters for General Articles */}
+     
       {activeTab === TAB_ARTICLES && (
         <div className="flex gap-4 mb-6">
           <select

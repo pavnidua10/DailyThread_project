@@ -3,7 +3,7 @@ import { getDiscussionsByArticle, createDiscussion } from '../controllers/discus
 import protect from '../middleware/authMiddleware.js';
 const router = express.Router();
 
-router.get('/:articleId', getDiscussionsByArticle);
-router.post('/:articleId', protect, createDiscussion);
+router.get('/article/:articleId', getDiscussionsByArticle);
+router.post('/article/:articleId', protect, createDiscussion);
 
 export default router;
