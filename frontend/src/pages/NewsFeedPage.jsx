@@ -86,7 +86,7 @@ const NewsFeedPage = () => {
         params.q = selectedTopic;
       }
 
-      const { data } = await axios.get(`http://localhost:5001${endpoint}`, { params });
+      const { data } = await axios.get(endpoint, { params });
       setArticles(data.articles || []);
     } catch (error) {
       console.error("Error fetching data:", error.message);

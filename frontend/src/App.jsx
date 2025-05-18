@@ -14,7 +14,9 @@ import { Toaster } from "sonner";
 
 import { useUser } from "./Context/UserContext";
 
-axios.defaults.baseURL = "http://localhost:5001";
+
+
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
 axios.defaults.withCredentials = true;
 
 function App() {
