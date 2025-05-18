@@ -44,12 +44,12 @@ app.use("/profiles", profilesRoutes);
 app.use("/community", communityRoutes);
 
 
-const frontendPath = path.resolve(__dirname, "../frontend/build");
-app.use(express.static(frontendPath));
+// const frontendPath = path.resolve(__dirname, "../frontend/build");
+// app.use(express.static(frontendPath));
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(frontendPath, "index.html"));
+// });
 
 
 app.listen(port, () => {
