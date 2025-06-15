@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import ArticleCard from "../components/ArticleCard";
 import { useUser } from "../Context/UserContext"; 
-
+import LoadingSpinner from "../components/LoadingSpinner";
 const categories = [
   { label: "All", value: "" },
   { label: "Politics", value: "politics" },
@@ -103,7 +103,8 @@ const NewsFeedPage = () => {
 
  
   const renderArticles = () => {
-    if (loading) return <p>Loading...</p>;
+   if (loading) return <LoadingSpinner />;
+
     if (!articles.length) return <p>No articles found.</p>;
 
     return (

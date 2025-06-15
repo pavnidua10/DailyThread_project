@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ArticleCard from '../components/ArticleCard';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const CommunityDetailPage = ({ currentUserId }) => {
   const { id } = useParams();
@@ -14,7 +15,7 @@ const CommunityDetailPage = ({ currentUserId }) => {
   const [activeTab, setActiveTab] = useState('discussion');
   const [userArticles, setUserArticles] = useState([]);
   const [selectedArticle, setSelectedArticle] = useState('');
-  const [isMember, setIsMember] = useState(false);
+  const [isMember, setIsMember] = useState(null);
 
   const chatContainerRef = useRef(null);
 
@@ -35,15 +36,34 @@ const CommunityDetailPage = ({ currentUserId }) => {
     fetchCommunity();
     fetchDiscussions();
     fetchUserArticles();
-    
+     checkMembership(); 
   }, [id, currentUserId]);
 
   const fetchCommunity = async () => {
+
     const res = await axios.get(`/community/community/${id}`);
     setCommunity(res.data.community);
     setArticles(res.data.articles);
     setIsMember(res.data.community.members.some(m => m._id === currentUserId));
+    setIsMember(
+  res.data.community.members.some(m =>
+    String(m._id ? m._id : m) === String(currentUserId)
+  )
+);
+
   };
+const checkMembership = async () => {
+  if (!currentUserId) {
+    setIsMember(false);
+    return;
+  }
+  try {
+    const res = await axios.get(`/community/${id}/is-member`);
+    setIsMember(res.data.isMember);
+  } catch (err) {
+    setIsMember(false);
+  }
+};
 
   const fetchDiscussions = async () => {
     const res = await axios.get(`/community/${id}/discussions`);
@@ -55,12 +75,25 @@ const CommunityDetailPage = ({ currentUserId }) => {
     setUserArticles(res.data.filter(a => !a.communityId || a.communityId !== id));
   };
 
-  const handleJoin = async () => {
-    await axios.post('/community/join', { communityId: id });
+  // const handleJoin = async () => {
+  //    console.log('Join button clicked');
+  //   await axios.post('/community/join', { communityId: id });
    
-    setIsMember(true);
-    fetchCommunity();
-  };
+  //   await fetchCommunity();
+  //     await checkMembership();
+  //    setJoinLoading(false);
+  // };
+const handleJoin = async () => {
+  setJoinLoading(true);
+  try {
+    await axios.post('/community/join', { communityId: id });
+  } catch (e) {
+    
+  }
+  const res = await axios.get(`/community/${id}/is-member`);
+  setIsMember(res.data.isMember); 
+  setJoinLoading(false);
+};
 
   const handlePostMessage = async (e) => {
     e.preventDefault();
@@ -98,23 +131,38 @@ const CommunityDetailPage = ({ currentUserId }) => {
       setActiveTab('discussion');
     }
   };
+if (!community || isMember === null) {
+  return (
+    <div className="p-4">
+      <LoadingSpinner /> 
+    </div>
+  );
+}
 
-  if (!community) return <div>Loading...</div>;
 
-  if (!isMember) {
-    return (
-      <div className="max-w-xl mx-auto p-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">{community.name}</h2>
-        <p className="mb-4">{community.description}</p>
-        <button
-          className="bg-blue-600 text-white px-6 py-2 rounded"
-          onClick={handleJoin}
-        >
-          Join Community
-        </button>
-      </div>
-    );
-  }
+
+ if (!isMember) {
+  return (
+    <div className="max-w-xl mx-auto p-8 text-center">
+      <h2 className="text-2xl font-bold mb-4">{community.name}</h2>
+      <p className="mb-4">{community.description}</p>
+      <button
+        className="bg-blue-600 text-white px-6 py-2 rounded mb-4"
+        onClick={handleJoin}
+      >
+        Join Community
+      </button>
+      <br />
+      <button
+        className="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300"
+        onClick={() => navigate('/communities')}
+      >
+        ← Back to Communities
+      </button>
+    </div>
+  );
+}
+
 
   return (
     

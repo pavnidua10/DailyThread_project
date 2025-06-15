@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-
+import LoadingSpinner from '../components/LoadingSpinner';
 const UserArticlesPage = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,9 +20,8 @@ const UserArticlesPage = () => {
     fetchUserArticles();
   }, []);
 
-  if (loading) {
-    return <div>Loading your articles...</div>;
-  }
+ 
+if (loading) return <LoadingSpinner />;
 
   return (
     <div className="max-w-4xl mx-auto">

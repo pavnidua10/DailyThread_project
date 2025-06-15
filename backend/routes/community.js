@@ -9,7 +9,8 @@ import {
    inviteToCommunity,
   getDiscussions,
   postDiscussion,
-  shareArticleToCommunity
+  shareArticleToCommunity,
+  isMember
 } from '../controllers/community.controller.js';
 import protect  from '../middleware/authMiddleware.js';
 
@@ -25,4 +26,5 @@ router.post('/:communityId/share-article', protect, shareArticleToCommunity);
 router.get('/:id/discussions', getDiscussions);
 router.post('/:id/discussions', protect, postDiscussion);
 router.get('/community/:id', getCommunity);
+router.get('/:id/is-member', protect, isMember);
 export default router;

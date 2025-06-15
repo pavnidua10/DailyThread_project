@@ -11,7 +11,7 @@ import CommunityPage from "./pages/CommunityPage";
 import Navbar from "./components/Navbar";
 import CommunityDetailPage from './pages/CommunityDetailPage';
 import { Toaster } from "sonner";
-
+import LoadingSpinner from './components/LoadingSpinner';
 import { useUser } from "./Context/UserContext";
 
 
@@ -23,10 +23,12 @@ function App() {
   const { user, loading } = useUser();
 
   
-  if (loading) return <div>Loading...</div>;
-  if (user === undefined) {
-    return <div className="p-4">Loading user...</div>;
-  }
+  // if (loading) return <div>Loading...</div>;
+  // if (user === undefined) {
+  //   return <div className="p-4">Loading user...</div>;
+  // }
+if (loading) return <LoadingSpinner />;
+if (user === undefined) return <div className="p-4"><LoadingSpinner /> Loading user...</div>;
 
   return (
     <div>

@@ -5,7 +5,7 @@ import SignOutButton from '../components/signout';
 import { useUser } from '../Context/UserContext'; 
 import ArticleCard from '../components/ArticleCard'; 
 import FullArticleModal from '../components/ArticleDetails'; 
-
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export let refreshMyProfile = () => {};
 
@@ -90,7 +90,8 @@ const ProfilePage = () => {
     }
   };
 
-  if (loading) return <div className="text-center text-xl mt-10">Loading profile...</div>;
+  // if (loading) return <div className="text-center text-xl mt-10">Loading profile...</div>;
+if (loading) return <LoadingSpinner />;
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-xl">

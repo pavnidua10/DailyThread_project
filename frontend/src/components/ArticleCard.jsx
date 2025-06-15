@@ -230,4 +230,3 @@ const ArticleCard = ({ article, onSaveToggle, currentUserId, isSavedTab, classNa
 };
 
 export default ArticleCard;
-

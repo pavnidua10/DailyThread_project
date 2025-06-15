@@ -4,7 +4,7 @@ import axios from 'axios';
 import ArticleCard from '../components/ArticleCard';
 import { useParams } from 'react-router-dom';
 import { useUser } from '../Context/UserContext'; 
-
+import LoadingSpinner from '../components/LoadingSpinner';
 const HomePage = () => {
   const [headlines, setHeadlines] = useState([]);
   const [topArticles, setTopArticles] = useState([]);
@@ -36,7 +36,7 @@ const HomePage = () => {
     fetchArticles();
   }, []);
 
-  if (loading) return <p className="text-center mt-4">Loading...</p>;
+  if (loading) return <LoadingSpinner />;
   if (error) return <p className="text-center mt-4 text-red-500">{error}</p>;
 
  

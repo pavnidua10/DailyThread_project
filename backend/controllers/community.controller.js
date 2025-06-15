@@ -155,3 +155,13 @@ export const shareArticleToCommunity = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+export const isMember = async (req, res) => {
+  const { id } = req.params; 
+  const userId = req.user._id;
+  const community = await Community.findById(id);
+  if (!community) return res.status(404).json({ isMember: false });
+  const isMember = community.members.some(
+    m => m.toString() === userId.toString()
+  );
+  res.json({ isMember });
+};

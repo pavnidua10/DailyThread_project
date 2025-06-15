@@ -11,7 +11,8 @@ const ArticleReview = ({ articleId, authorId }) => {
   const [myReview, setMyReview] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const isAuthor = user?._id === authorId;
+  const isAuthor = String(user?._id) === String(authorId);
+
 
   const fetchReviews = async () => {
     setLoading(true);
