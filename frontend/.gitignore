@@ -7,7 +7,8 @@ build/
 
 # Environment variables
 .env
-
+.env.development
+.env.production
 # Logs
 *.log
 
