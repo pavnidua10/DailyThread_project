@@ -20,7 +20,6 @@ const app = express();
 const port = process.env.PORT || 5001;
 
 
-
 app.use(cors({
   origin:["http://localhost:5173", "https://dailythread-project-1.onrender.com"],
   credentials: true 
@@ -36,16 +35,20 @@ app.get('/api/config/cloudinary', (req, res) => {
   });
 });
 
+app.get("/", (req, res) => {
+  res.send("API is running...");
+});
 
 app.use("/articles", articlesRoutes);
 app.use("/auth", authRoutes);
 app.use("/discussions", discussionsRoutes);
 app.use("/profiles", profilesRoutes);
-app.use("/community", communityRoutes);
+app.use("/communities", communityRoutes);
 
 
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-  connectDB();
+connectDB().then(() => {
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
 });

@@ -66,7 +66,7 @@ const NewsFeedPage = () => {
     setLoading(true);
     try {
       let endpoint = "/articles/headlines";
-      let params = { pageSize: 12 };
+      let params = { pageSize: 50 };
 
       if (activeTab === TAB_HEADLINES) {
         params.country = selectedRegion;

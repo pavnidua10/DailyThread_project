@@ -4,7 +4,7 @@ import Discussion from '../models/discussion.model.js';
 export const getDiscussionsByArticle = async (req, res) => {
   try {
     const { articleId } = req.params;
-    const discussions = await Discussion.find({ articleId }).populate('userId', 'name');
+    const discussions = await Discussion.find({ articleId }).populate('userId', 'name','email','profilePhoto');
     res.json(discussions);
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -29,62 +29,60 @@ export const getMyProfile = async (req, res) => {
   const userId = req.user._id;
 
   try {
-    const profile = await Profile.findOne({ userId });
-    if (!profile) return res.status(404).json({ error: 'Profile not found' });
+    let profile = await Profile.findOne({ userId });
 
-    const user = await User.findById(userId); 
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // ✅ AUTO CREATE PROFILE IF NOT EXISTS
+    if (!profile) {
+      profile = await Profile.create({
+        userId,
+        name: user.name,
+        bio: '',
+        email: user.email,
+        followers: [],
+        following: [],
+      });
+    }
 
     return res.status(200).json({
       ...profile.toObject(),
-      email: user.email, 
-       followers: user.followers || [],
+      email: user.email,
+      profilePhoto: user.profilePhoto || '',
+      followers: user.followers || [],
       following: user.following || [],
     });
+
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 };
-
-
-export const followReporter = async (req, res) => {
-    const userId = req.user._id;
-  const { reporterId } = req.params;
-
+export const getPublicProfile = async (req, res) => {
   try {
-    const reporterProfile = await Profile.findOne({ userId: reporterId });
+    const userId = req.params.id;
 
-    if (!reporterProfile || !reporterProfile.isReporter) {
-      return res.status(400).json({ error: 'User is not a reporter' });
+    const user = await User.findById(userId).select(
+      "name email profilePhoto followers following"
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
 
-    if (reporterProfile.followers.includes(userId)) {
-      return res.status(400).json({ error: 'Already following this reporter' });
-    }
+    const profile = await Profile.findOne({ userId });
 
-    reporterProfile.followers.push(userId);
-    await reporterProfile.save();
-
-    return res.status(200).json({ message: 'Followed successfully' });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-};
-
-
-export const getProfile= async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id); 
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    res.json({
+    return res.status(200).json({
       name: user.name,
       email: user.email,
-      isReporter: user.isReporter,
-     
+      profilePhoto: user.profilePhoto || "",
+      bio: profile?.bio || "",
+      followers: user.followers || [],
+      following: user.following || [],
     });
+
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: err.message });
   }
 };
 
@@ -109,3 +107,61 @@ export const updateProfile = async (req, res) => {
 };
 
 
+
+export const getSuggestedUsers = async (req, res) => {
+  try {
+    const currentUserId = req.user._id;
+    const users = await User.find({
+      _id: { $ne: currentUserId }, 
+    })
+      .select("name email username") 
+      .limit(10);
+
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch suggested users" });
+  }
+};
+
+export const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id).select(
+      "name email isReporter profilePhoto bio"
+    );
+
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    res.json(user);
+
+  } catch (error) {
+    console.error("Get user error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const uploadProfilePicture = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { profilePic: req.file.path },
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "Profile picture updated",
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};

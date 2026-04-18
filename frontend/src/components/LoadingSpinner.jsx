@@ -1,9 +1,16 @@
 import React from 'react';
 
 const spinnerStyle = {
+  position: 'fixed',       // cover full screen
+  top: 0,
+  left: 0,
+  width: '100vw',
+  height: '100vh',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
+  backgroundColor: 'rgba(255,255,255,0.6)', // optional light overlay
+  zIndex: 9999,
 };
 
 const circleStyle = {

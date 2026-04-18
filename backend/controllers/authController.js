@@ -11,8 +11,8 @@ export const generateToken = (res, userId) => {
 
   res.cookie('jwt', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'None',
+      secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
@@ -90,18 +90,19 @@ export const unfollowUser = async (req, res) => {
 export const searchUsers = async (req, res) => {
   const { query } = req.query;
   const regex = new RegExp(query, 'i');
-  const users = await User.find({ name: regex }, 'name bio');
+  const users = await User.find({ name: regex }, 'name email bio followers following communities profilePhoto');
   res.json(users);
 };
 export const getUser= async (req, res) => {
   const user = await User.findById(req.params.id)
-    .select('name email bio followers following communities');
+    .select('name email bio followers following communities profilePhoto');
   const articles = await Article.find({ authorId: req.params.id });
   res.json({ user, articles });
 };
 export const getUserProfile = async (req, res) => {
   const user = await User.findById(req.params.id)
-    .select('name email bio followers following communities')
+    .select('name email bio followers following communities profilePhoto')
     .populate('communities', 'name'); 
-  res.json(user);
+    const articles = await Article.find({ authorId: req.params.id });
+  res.json({ user, articles });
 };
