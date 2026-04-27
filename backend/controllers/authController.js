@@ -22,24 +22,49 @@ export const generateToken = (res, userId) => {
 export const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   try {
-    const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json({ message: 'User already exists' });
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
 
-    const user = await User.create({ name, email, password });
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Please enter a valid email address" });
+    }
 
-    // Create a profile for the new user
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long" });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const userExists = await User.findOne({ email: normalizedEmail });
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const user = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      password,
+    });
+
     await Profile.create({
       userId: user._id,
       name: user.name,
       email: user.email,
       bio: "No bio yet",
       followers: [],
-      following: []
+      following: [],
     });
 
     generateToken(res, user._id);
-    return res.status(201).json({ message: 'User registered', user });
+
+    return res.status(201).json({
+      message: "User registered",
+      user,
+    });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
