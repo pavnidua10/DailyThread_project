@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useUser } from '../Context/UserContext';
+import API from "../utils/api";
+
 import ArticleCard from '../components/ArticleCard';
 import FullArticleModal from '../components/ArticleDetails';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -9,7 +10,7 @@ import { FaPencilAlt, FaTrash } from 'react-icons/fa';
 export let refreshMyProfile = () => {};
 
 const ProfilePage = () => {
-  const { setUser } = useUser();
+  const [user, setUser] = useState(null);
 
   const [profile, setProfile] = useState({
     name: '',
@@ -32,9 +33,9 @@ const ProfilePage = () => {
     try {
       setLoading(true);
       const [profileRes, articlesRes, savedRes] = await Promise.all([
-        axios.get('/profiles/me'),
-        axios.get('/articles/articles/by-author'),
-        axios.get('/articles/articles/saved'),
+        API.get('/profiles/me'),
+        API.get('/articles/articles/by-author'),
+        API.get('/articles/articles/saved'),
       ]);
 
       setProfile({
@@ -69,7 +70,7 @@ const ProfilePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put('/profiles/profile', {
+      await   API.put('/profiles/profile', {
         name: profile.name,
         bio: profile.bio,
       });
@@ -91,7 +92,7 @@ const ProfilePage = () => {
   /* ================= REFRESH SAVED ================= */
   const handleArticleSaveToggle = async () => {
     try {
-      const savedRes = await axios.get('/articles/articles/saved');
+      const savedRes = await API.get('/articles/articles/saved');
       setSavedArticles(savedRes.data);
     } catch (error) {
       console.error('Error refreshing saved articles:', error);
@@ -118,7 +119,7 @@ const ProfilePage = () => {
       const result = await res.json();
       if (result.secure_url) {
         // Save to backend
-        await axios.put('/profiles/profile', { profilePhoto: result.secure_url });
+        await API.put('/profiles/profile', { profilePhoto: result.secure_url });
         setProfile({ ...profile, profilePhoto: result.secure_url });
       }
     } catch (error) {
@@ -130,7 +131,7 @@ const ProfilePage = () => {
 
   const handleDeletePhoto = async () => {
     try {
-      await axios.put('/profiles/profile', { profilePhoto: '' });
+      await API.put('/profiles/profile', { profilePhoto: '' });
       setProfile({ ...profile, profilePhoto: '' });
     } catch (error) {
       console.error('Delete profile photo failed', error);
