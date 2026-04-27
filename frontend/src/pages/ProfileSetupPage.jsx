@@ -28,33 +28,36 @@ const ProfilePage = () => {
   const [savedArticles, setSavedArticles] = useState([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  /* ================= FETCH PROFILE ================= */
-  const fetchMyProfile = async () => {
-    try {
-      setLoading(true);
-      const [profileRes, articlesRes, savedRes] = await Promise.all([
-        API.get('/profiles/me'),
-        API.get('/articles/articles/by-author'),
-        API.get('/articles/articles/saved'),
-      ]);
+const fetchMyProfile = async () => {
+  try {
+    setLoading(true);
 
-      setProfile({
-        name: profileRes.data.name || '',
-        bio: profileRes.data.bio || '',
-        email: profileRes.data.email || '',
-        profilePhoto: profileRes.data.profilePhoto || '',
-        followers: profileRes.data.followers || [],
-        following: profileRes.data.following || [],
-      });
+    const [profileRes, articlesRes, savedRes] = await Promise.all([
+      API.get('/profiles/me'),
+      API.get('/articles/articles/by-author'),
+      API.get('/articles/articles/saved'),
+    ]);
 
-      setArticles(articlesRes.data || []);
-      setSavedArticles(savedRes.data || []);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setProfile({
+      name: profileRes.data.name || '',
+      bio: profileRes.data.bio || '',
+      email: profileRes.data.email || '',
+      profilePhoto: profileRes.data.profilePhoto || '',
+      followers: profileRes.data.followers || [],
+      following: profileRes.data.following || [],
+    });
+
+    setArticles(articlesRes.data || []);
+    setSavedArticles(savedRes.data || []);
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    console.error('Status:', error.response?.status);
+    console.error('Data:', error.response?.data);
+    console.error('Headers:', error.response?.headers);
+  } finally {
+    setLoading(false);
+  }
+};
 
   refreshMyProfile = fetchMyProfile;
 
