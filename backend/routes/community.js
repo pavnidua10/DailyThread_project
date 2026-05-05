@@ -18,11 +18,14 @@ import {
   postDiscussion,
   getSuggestedCommunities,
   inviteToCommunity,
+  communityPulse,
+
 } from "../controllers/community.controller.js";
+
 
 const router = express.Router();
 
-
+router.get("/:communityid/pulse",communityPulse);
 
 router.get("/suggested", protect, getSuggestedCommunities);
 
@@ -53,9 +56,10 @@ router.post("/:id/articles", protect, addArticleToCommunity);
 router.post("/:id/share-article", protect, shareArticleToCommunity);
 
 
-router.get("/:id/discussions", getDiscussions);
-router.post("/:id/discussions", protect, postDiscussion);
-
+// router.get("/:communityid/discussions", getDiscussions);
+// router.post("/:communityid/discussions", protect, postDiscussion);
+// router.post("/:communityId/discussions/:discussionId/vote",protect,voteDiscussion)
+// // POST /communities/:communityId/discussions/:discussionId/vote
 
 router.get("/:id", getCommunity);
 

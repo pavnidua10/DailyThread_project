@@ -2,6 +2,71 @@ import Community from '../models/community.model.js';
 import User from '../models/user.js';
 import Article from '../models/article.model.js';
 import CommunityDiscussion from '../models/communityDiscussion.js';
+import Discussion from '../models/discussion.model.js';
+import Sentiment from "sentiment";
+
+const analyzer = new Sentiment();
+export const communityPulse= async (req, res) => {
+  const { id } = req.params;
+  const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+
+  const discussions = await Discussion.find({
+    communityId: id,
+    createdAt: { $gt: twelveHoursAgo },
+    message: { $exists: true, $ne: "" },
+  }).sort({ createdAt: 1 }).limit(200);
+
+  if (discussions.length < 3) {
+    return res.json(null); // frontend handles "not enough data"
+  }
+
+  const analyzed = discussions.map((d) => {
+    const result = analyzer.analyze(d.message || "");
+    const normalized = Math.min(100, Math.max(0, ((result.comparative + 5) / 10) * 100));
+    return { score: normalized, words: result, createdAt: d.createdAt };
+  });
+
+  const currentScore = Math.round(analyzed.reduce((s, a) => s + a.score, 0) / analyzed.length);
+
+  // 30-min buckets for sparkline
+  const buckets = {};
+  analyzed.forEach(({ score, createdAt }) => {
+    const d = new Date(createdAt);
+    const bucket = `${d.getHours()}:${d.getMinutes() < 30 ? "00" : "30"}`;
+    if (!buckets[bucket]) buckets[bucket] = [];
+    buckets[bucket].push(score);
+  });
+
+  const history = Object.entries(buckets).map(([time, scores]) => ({
+    time,
+    score: Math.round(scores.reduce((s, v) => s + v, 0) / scores.length),
+  }));
+
+  // Top words
+  const positiveWords = analyzed.flatMap((a) => a.words.positive || []);
+  const negativeWords = analyzed.flatMap((a) => a.words.negative || []);
+  const freq = (arr) => {
+    const map = {};
+    arr.forEach((w) => { map[w] = (map[w] || 0) + 1; });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([w]) => w);
+  };
+
+  // Breakdown
+  const pct = (fn) => Math.round((analyzed.filter(fn).length / analyzed.length) * 100);
+  const breakdown = {
+    veryPositive: pct((a) => a.score >= 80),
+    positive:     pct((a) => a.score >= 60 && a.score < 80),
+    neutral:      pct((a) => a.score >= 40 && a.score < 60),
+    negative:     pct((a) => a.score >= 20 && a.score < 40),
+    veryNegative: pct((a) => a.score < 20),
+  };
+
+  res.json({
+    currentScore, totalAnalyzed: analyzed.length,
+    history, topPositive: freq(positiveWords),
+    topNegative: freq(negativeWords), breakdown,
+  });
+};
 
 export const searchCommunities = async (req, res) => {
   const { query } = req.query;
@@ -345,3 +410,4 @@ export const getSuggestedCommunities = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+

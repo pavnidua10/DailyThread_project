@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, loginUser, logoutUser,followUser,unfollowUser,searchUsers, getUser, getUserProfile} from '../controllers/authController.js';
+import { registerUser, loginUser, logoutUser,followUser,unfollowUser,searchUsers, getUser, getUserProfile,getCredibility} from '../controllers/authController.js';
 import protect from '../middleware/authMiddleware.js';
 const router = express.Router();
 
@@ -14,4 +14,5 @@ router.post('/unfollow', protect, unfollowUser);
 router.get('/search', searchUsers);
 router.get('/profile/:id', getUserProfile);
 router.get('/user/:id', getUser);
+router.get("/:userId/credibility",getCredibility);
 export default router;

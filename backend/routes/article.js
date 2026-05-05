@@ -14,6 +14,7 @@ import {
   getMyReview,
   getRelevantArticles,
   unsaveArticle,
+
 } from '../controllers/article.controller.js';
 import protect from '../middleware/authMiddleware.js';
 const router = express.Router();
@@ -32,7 +33,6 @@ router.get('/articles/saved', protect, getSavedArticles);
 router.get('/top-rated', getTopRatedArticles);
 router.get('/relevant',getRelevantArticles);
 router.post('/unsave', protect, unsaveArticle);
-
 
 export default router;
 
