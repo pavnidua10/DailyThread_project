@@ -6,9 +6,6 @@ import { FaPencilAlt, FaTrash } from 'react-icons/fa';
 
 export let refreshMyProfile = () => {};
 
-/* ─────────────────────────────────────────────────────────────────
-   STYLES
-───────────────────────────────────────────────────────────────── */
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -255,7 +252,7 @@ const ProfilePage = () => {
       setArticles(articlesRes.data || []);
       setSavedArticles(savedRes.data || []);
       if (u._id) {
-        API.get(`/users/${u._id}/credibility`).then(r => setCredData(r.data)).catch(() => {});
+        API.get(`/auth/${u._id}/credibility`).then(r => setCredData(r.data)).catch(() => {});
       }
     } catch (e) {
       console.error(e);
@@ -298,7 +295,7 @@ const ProfilePage = () => {
     setUploading(true);
     try {
       const fd = new FormData();
-      fd.append("profilePhoto", file);
+      fd.append("image", file);
 
       const res = await API.post("/auth/profile-image", fd, {
         headers: { "Content-Type": "multipart/form-data" },

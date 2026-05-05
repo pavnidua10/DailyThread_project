@@ -584,7 +584,7 @@ const CommunityDetailPage = ({ currentUserId }) => {
     catch (e) { console.error(e); }
   };
   const fetchDiscussions = async () => {
-    try { const r = await axios.get(`/communities/${id}/discussions`); setDiscussions(r.data); }
+    try { const r = await axios.get(`/api/communities/${id}/discussions`); setDiscussions(r.data); }
     catch (e) { console.error(e); }
   };
 

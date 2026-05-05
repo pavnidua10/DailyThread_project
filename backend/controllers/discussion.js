@@ -2,9 +2,6 @@ import Discussion from "../models/discussion.model";
 import sourceVerification from '../models/sourceVerificationSchema.model.js'
 import axios from "axios";
 
-// ─────────────────────────────────────────
-// CLAIM TYPES
-// ─────────────────────────────────────────
 export const CLAIM_TYPE_LABELS = {
   personal_experience: { label: "Personal Experience", color: "#0284C7", bg: "#E0F2FE", icon: "👤" },
   cited_source:        { label: "Cited Source",        color: "#059669", bg: "#D1FAE5", icon: "📎" },
@@ -13,9 +10,7 @@ export const CLAIM_TYPE_LABELS = {
   general:             { label: "General",             color: "#6B7280", bg: "#F3F4F6", icon: "•"  },
 };
 
-// ─────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────
+
 const extractDomain = (url) => {
   try {
     return new URL(url.startsWith("http") ? url : `https://${url}`)
@@ -25,9 +20,7 @@ const extractDomain = (url) => {
   }
 };
 
-// ─────────────────────────────────────────
-// GET discussions
-// ─────────────────────────────────────────
+
 export const getDiscussions = async (req, res) => {
   try {
     const { communityId } = req.params;
@@ -45,9 +38,7 @@ export const getDiscussions = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────
-// CREATE discussion
-// ─────────────────────────────────────────
+
 export const createDiscussion = async (req, res) => {
   try {
     const { communityId } = req.params;
@@ -106,9 +97,7 @@ export const createDiscussion = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────
-// VOTE discussion
-// ─────────────────────────────────────────
+
 export const voteDiscussion = async (req, res) => {
   try {
     const { discussionId } = req.params;
