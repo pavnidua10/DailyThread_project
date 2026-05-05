@@ -71,7 +71,7 @@ function CredibilityBadge({ userId }) {
   const [open, setOpen] = useState(false);
   useEffect(() => {
     if (!userId) return;
-    axios.get(`/users/${userId}/credibility`).then((r) => setData(r.data)).catch(() => {});
+    axios.get(`/auth/${userId}/credibility`).then((r) => setData(r.data)).catch(() => {});
   }, [userId]);
   if (!data) return null;
   const tier = getTier(data.total);

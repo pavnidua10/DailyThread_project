@@ -28,7 +28,7 @@ const ArticleDiscussion = ({ articleId }) => {
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const res = await axios.get(`/api/discussions/article/${articleId}`, { withCredentials: true });
+        const res = await axios.get(`/discussions/article/${articleId}`, { withCredentials: true });
         setComments(res.data);
       } catch (err) {
         setComments([]);
@@ -50,7 +50,7 @@ const ArticleDiscussion = ({ articleId }) => {
       );
       setComment('');
      
-      const res = await axios.get(`/api/discussions/article/${articleId}`, { withCredentials: true });
+      const res = await axios.get(`/discussions/article/${articleId}`, { withCredentials: true });
       setComments(res.data);
     } catch (err) {
       setError('Failed to post comment. Are you logged in?');
