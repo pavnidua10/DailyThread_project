@@ -1,7 +1,7 @@
 import Community from '../models/community.model.js';
 import User from '../models/user.js';
 import Article from '../models/article.model.js';
-import CommunityDiscussion from '../models/communityDiscussion.js';
+import CommunityDiscussion from '../models/communityDiscussion.model.js';
 import Discussion from '../models/discussion.model.js';
 import Sentiment from "sentiment";
 

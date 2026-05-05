@@ -1,4 +1,4 @@
-import Discussion from "../models/discussion.model";
+import Discussion from "../models/communityDiscussion.model.js";
 import sourceVerification from '../models/sourceVerificationSchema.model.js'
 import axios from "axios";
 
