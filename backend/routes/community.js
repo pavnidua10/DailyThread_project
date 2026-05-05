@@ -25,7 +25,7 @@ import {
 
 const router = express.Router();
 
-router.get("/:communityid/pulse",communityPulse);
+router.get("/:id/pulse",communityPulse);
 
 router.get("/suggested", protect, getSuggestedCommunities);
 

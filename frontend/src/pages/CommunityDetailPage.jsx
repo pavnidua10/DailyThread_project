@@ -3,9 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import ArticleCard from "../components/ArticleCard";
 
-// ═════════════════════════════════════════════════════════════════
-// CREDIBILITY BADGE
-// ═════════════════════════════════════════════════════════════════
+
 const TIERS = [
   { min: 85, label: "Authority",      color: "#7C3AED", bg: "#EDE9FE", icon: "◆" },
   { min: 70, label: "Verified Voice", color: "#0369A1", bg: "#E0F2FE", icon: "✦" },

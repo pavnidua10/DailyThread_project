@@ -1,49 +1,8 @@
-/**
- * DebateMode.jsx
- *
- * Structured debate on any article. Splits comment section into FOR / AGAINST.
- * An AI referee periodically summarizes the strongest arguments from each side.
- *
- * Props:
- *   articleId     — string
- *   currentUserId — string
- *   credibility   — object from CredibilityBadge (optional, for display)
- *
- * Backend contracts:
- *
- * GET  /articles/:id/debate
- * Returns: { arguments: [...], summary: { for: "...", against: "...", updatedAt: "..." } | null }
- *
- * POST /articles/:id/debate
- * Body: { side: "for" | "against", text: string }
- * Returns: the created argument object
- *
- * POST /articles/:id/debate/:argId/vote
- * Body: { vote: "up" | "down" }
- *
- * POST /articles/:id/debate/summarize   (called by frontend, triggers AI)
- * Returns: { for: "...", against: "...", updatedAt: "..." }
- *
- * Backend AI hint (Node.js):
- *   Collect top 10 FOR and top 10 AGAINST arguments by upvotes.
- *   Send to OpenAI/Anthropic with prompt:
- *   "Summarize the strongest FOR arguments in 2 sentences. Then the strongest AGAINST in 2 sentences.
- *    Be neutral. Do not take a side."
- *   Cache result for 10 minutes.
- *
- * Argument DB schema:
- * {
- *   _id, articleId, authorId: { _id, name, profilePhoto },
- *   side: "for"|"against", text, upvotes: [], downvotes: [],
- *   credibilityScore: Number,   // snapshot of author's score at post time
- *   createdAt
- * }
- */
+
 
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-// ─── Side config ─────────────────────────────────────────────────
 const SIDES = {
   for: {
     label: "For",

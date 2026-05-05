@@ -17,7 +17,9 @@ router.get('/search', searchUsers);
 router.get('/profile/:id', getUserProfile);
 router.get('/user/:id', getUser);
 router.get("/:userId/credibility",getCredibility);
-router.post("/profile-image", protect, upload.single("profilePhoto"), uploadProfileImage);
+router.post("/upload", upload.single("image"), (req, res) => {
+  res.json({ url: req.file.path });
+});
 router.delete("/profile-image", protect, deleteProfilePhoto);
 
 export default router;
