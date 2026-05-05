@@ -184,7 +184,7 @@ function PublicCredibilityPanel({ userId, userName }) {
 
   useEffect(() => {
     if (!userId) return;
-    API.get(`/users/${userId}/credibility`)
+    API.get(`/auth/${userId}/credibility`)
       .then(r => setData(r.data))
       .catch(() => {})
       .finally(() => setLoad(false));
