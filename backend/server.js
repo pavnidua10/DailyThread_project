@@ -1,8 +1,6 @@
+import "dotenv/config";
 import express from "express";
-import dotenv from "dotenv";
-
-dotenv.config();
-import cors from "cors"; 
+import cors from "cors";
 import { connectDB } from "./db/connect.js";
 import articlesRoutes from "./routes/article.js";
 import authRoutes from "./routes/auth.js";
@@ -18,7 +16,6 @@ import activityRoutes from "./routes/activity.js";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
-
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,7 +38,7 @@ app.get('/api/config/cloudinary', (req, res) => {
     uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET,
   });
 });
-
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.get("/", (req, res) => {
   res.send("API is running...");
 });

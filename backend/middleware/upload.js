@@ -1,15 +1,14 @@
-// import multer from "multer";
+import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../cloudinary.js";
 
-// import cloudinary from "../cloudinary";
-// import { CloudinaryStorage } from 'multer-storage-cloudinary-v2';
-// const storage = new CloudinaryStorage({
-//   cloudinary,
-//   params: {
-//     folder: "profile_pictures",
-//     allowed_formats: ["jpg", "png", "jpeg"],
-//   },
-// });
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "profile_pictures",
+    format: async (req, file) => "png",
+    public_id: (req, file) => `profile_${Date.now()}`,
+  },
+});
 
-// const upload = multer({ storage });
-
-// export default upload;
+export default multer({ storage });

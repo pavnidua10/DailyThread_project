@@ -182,3 +182,45 @@ export const getCredibility=async (req, res) => {
   res.json(scoreData);
 };
 
+export const uploadProfileImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No image uploaded" });
+    }
+
+    const imageUrl = `/${req.file.path.replace(/\\/g, "/")}`;
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { profilePhoto: imageUrl },
+      { new: true }
+    ).select("-password");
+
+    res.status(200).json({
+      message: "Profile image uploaded successfully",
+      profilePhoto: user.profilePhoto,
+      user,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteProfilePhoto = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { profilePhoto: "" },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({
+      message: "Profile photo removed successfully",
+      user,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
