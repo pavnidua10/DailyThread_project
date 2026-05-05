@@ -25,13 +25,12 @@ import {
 
 const router = express.Router();
 
-router.get("/:id/pulse",communityPulse);
 
 router.get("/suggested", protect, getSuggestedCommunities);
 
 router.get("/search", searchCommunities);
 
-router.get("/suggested", protect, getSuggestedCommunities);
+
 
 router.get("/my", protect, getMyCommunities);
 
@@ -56,11 +55,9 @@ router.post("/:id/articles", protect, addArticleToCommunity);
 router.post("/:id/share-article", protect, shareArticleToCommunity);
 
 
-// router.get("/:communityid/discussions", getDiscussions);
-// router.post("/:communityid/discussions", protect, postDiscussion);
-// router.post("/:communityId/discussions/:discussionId/vote",protect,voteDiscussion)
-// // POST /communities/:communityId/discussions/:discussionId/vote
 
 router.get("/:id", getCommunity);
+router.get("/:id/pulse",communityPulse);
+
 
 export default router;

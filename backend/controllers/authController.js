@@ -3,7 +3,7 @@ import User from '../models/user.js';
 import Profile from "../models/profile.model.js";
 import Article from '../models/article.model.js';
 import DebateArgument from '../models/DebateArgument.js'
-
+import CredibilityScore from '../models/CredibilityScore.js';
 export const generateToken = (res, userId) => {
   const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
     expiresIn: '7d',
@@ -132,54 +132,62 @@ export const getUserProfile = async (req, res) => {
   res.json({ user, articles });
 };
 
+export const getCredibility = async (req, res) => {
+  try {
+    const { userId } = req.params;
 
-export const getCredibility=async (req, res) => {
-  const { userId } = req.params;
+    const cached = await CredibilityScore.findOne({ 
+      userId, 
+      updatedAt: { $gt: new Date(Date.now() - 86400000) } 
+    });
+    if (cached) return res.json(cached.data);
 
-  // Check cache (e.g. a CredibilityScore document with a 24h TTL)
-  const cached = await CredibilityScore.findOne({ userId, updatedAt: { $gt: new Date(Date.now() - 86400000) } });
-  if (cached) return res.json(cached.data);
+    const [user, articles, debateArgs] = await Promise.all([
+      User.findById(userId),
+      Article.find({ authorId: userId }),
+      DebateArgument.find({ "authorId._id": userId }),
+    ]);
 
-  const [user, articles, debateArgs] = await Promise.all([
-    User.findById(userId),
-    Article.find({ authorId: userId }),
-    DebateArgument.find({ "authorId._id": userId }),
-  ]);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-  const articlesPublished = articles.length;
-  const totalUpvotes = articles.reduce((s, a) => s + (a.upvotes?.length || 0), 0);
-  const avgRating = articles.length
-    ? articles.reduce((s, a) => s + (a.rating || 0), 0) / articles.length
-    : 0;
-  const flaggedCount = user.moderationFlags || 0;
-  const daysAsMember = Math.max(1, (Date.now() - user.createdAt) / 86400000);
-  const netDebateVotes = debateArgs.reduce(
-    (s, a) => s + (a.upvotes?.length || 0) - (a.downvotes?.length || 0), 0
-  );
+    const articlesPublished = articles.length;
+    const totalUpvotes = articles.reduce((s, a) => s + (a.upvotes?.length || 0), 0);
+    const avgRating = articles.length
+      ? articles.reduce((s, a) => s + (a.rating || 0), 0) / articles.length
+      : 0;
+    const flaggedCount = user.moderationFlags || 0;
+    const daysAsMember = Math.max(1, (Date.now() - user.createdAt) / 86400000);
+    const netDebateVotes = debateArgs.reduce(
+      (s, a) => s + (a.upvotes?.length || 0) - (a.downvotes?.length || 0), 0
+    );
 
-  const breakdown = {
-    articleQuality:   Math.round(Math.min(30, (avgRating / 5) * 30)),
-    sourceAccuracy:   Math.round(Math.min(25, (articles.filter(a => a.source).length / Math.max(1, articlesPublished)) * 25)),
-    communityTrust:   Math.round(Math.min(20, totalUpvotes / 10)),
-    consistencyBonus: Math.round(Math.max(0, Math.min(15, (articlesPublished / (daysAsMember / 7)) * 3) - flaggedCount * 5)),
-    debateScore:      Math.round(Math.min(10, Math.max(0, netDebateVotes / 5))),
-  };
+    const breakdown = {
+      articleQuality:   Math.round(Math.min(30, (avgRating / 5) * 30)),
+      sourceAccuracy:   Math.round(Math.min(25, (articles.filter(a => a.source).length / Math.max(1, articlesPublished)) * 25)),
+      communityTrust:   Math.round(Math.min(20, totalUpvotes / 10)),
+      consistencyBonus: Math.round(Math.max(0, Math.min(15, (articlesPublished / (daysAsMember / 7)) * 3) - flaggedCount * 5)),
+      debateScore:      Math.round(Math.min(10, Math.max(0, netDebateVotes / 5))),
+    };
 
-  const total = Math.min(100, Math.max(0, Object.values(breakdown).reduce((s, v) => s + v, 0)));
+    const total = Math.min(100, Math.max(0, Object.values(breakdown).reduce((s, v) => s + v, 0)));
 
-  const scoreData = {
-    total, breakdown, articlesPublished,
-    flaggedCount, endorsedBy: totalUpvotes,
-    joinedDaysAgo: Math.round(daysAsMember),
-  };
+    const scoreData = {
+      total, breakdown, articlesPublished,
+      flaggedCount, endorsedBy: totalUpvotes,
+      joinedDaysAgo: Math.round(daysAsMember),
+    };
 
-  await CredibilityScore.findOneAndUpdate(
-    { userId },
-    { userId, data: scoreData, updatedAt: new Date() },
-    { upsert: true }
-  );
+    await CredibilityScore.findOneAndUpdate(
+      { userId },
+      { userId, data: scoreData, updatedAt: new Date() },
+      { upsert: true }
+    );
 
-  res.json(scoreData);
+    res.json(scoreData);
+  } catch (err) {
+    console.error("getCredibility error:", err);
+    res.status(500).json({ message: "Failed to compute credibility score" });
+  }
 };
 
 export const uploadProfileImage = async (req, res) => {

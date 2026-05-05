@@ -31,6 +31,9 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
+app.use(express.json());        
+app.use(cookieParser());      
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.get("/", (req, res) => {
@@ -39,7 +42,7 @@ app.get("/", (req, res) => {
 
 app.use("/articles", articlesRoutes);
 app.use("/auth", authRoutes);
-app.use("/discussions", discussionsRoutes);
+app.use("/discussions", discussion);
 app.use("/profiles", profilesRoutes);
 app.use("/communities", communityRoutes);
 app.use("/api", leaderboardRoutes);
@@ -47,8 +50,13 @@ app.use("/api", sourceVerificationRoutes);
 app.use("/api", verdictRoutes);
 app.use("/api", debateRoutes);
 app.use("/api", activityRoutes);
-app.use("/api", discussion);
-
+app.use("/api", discussionsRoutes);
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled Rejection:', err);
+});
 connectDB().then(() => {
   app.listen(port, () => {
     console.log(`Server running on port ${port}`);

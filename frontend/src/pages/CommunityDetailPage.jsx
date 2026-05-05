@@ -605,7 +605,7 @@ const CommunityDetailPage = ({ currentUserId }) => {
   // Enhanced send with claim type + source
   const handleSend = async ({ message, claimType, sourceUrl }) => {
     try {
-      await axios.post(`/communities/${id}/discussions`, { message, claimType, sourceUrl }, { withCredentials: true });
+      await axios.post(`/api/communities/${id}/discussions`, { message, claimType, sourceUrl }, { withCredentials: true });
       fetchDiscussions();
     } catch (e) { console.error(e); }
   };
