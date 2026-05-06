@@ -60,5 +60,5 @@ const CommunityDiscussion = new mongoose.Schema(
   { timestamps: true } // gives createdAt and updatedAt, used in .sort({ createdAt: 1 })
 );
 
-const Discussion = mongoose.model("Discussion", discussionSchema);
+const Discussion = mongoose.model("Discussion", CommunityDiscussion);
 export default Discussion;
