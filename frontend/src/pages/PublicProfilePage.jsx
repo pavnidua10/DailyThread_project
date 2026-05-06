@@ -285,7 +285,7 @@ function PublicAchievements({ userId, userName }) {
 
   useEffect(() => {
     if (!userId) return;
-    API.get(`/users/${userId}/credibility`)
+    API.get(`/auth/${userId}/credibility`)
       .then(r => setData(r.data))
       .catch(() => {})
       .finally(() => setLoad(false));
@@ -395,7 +395,7 @@ const PublicProfilePage = () => {
     Promise.all([
       API.get(`/profiles/${id}`),
       API.get(`/articles/articles/by-author/${id}`).catch(() => ({ data: [] })),
-      API.get(`/users/${id}/credibility`).catch(() => ({ data: null })),
+      API.get(`/auth/${id}/credibility`).catch(() => ({ data: null })),
       API.get('/profiles/me').catch(() => ({ data: null })),
     ]).then(([profileRes, articlesRes, credRes, meRes]) => {
       setUser(profileRes.data);

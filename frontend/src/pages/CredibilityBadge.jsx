@@ -186,7 +186,7 @@ export default function CredibilityBadge({ userId, score: scoreProp, size = "md"
   useEffect(() => {
     if (scoreProp) { setData(scoreProp); return; }
     if (!userId) return;
-    axios.get(`/auth/${userId}/credibility`)
+    API.get(`/auth/${userId}/credibility`)
       .then((res) => setData(res.data))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
