@@ -2,7 +2,6 @@ import Community from '../models/community.model.js';
 import User from '../models/user.js';
 import Article from '../models/article.model.js';
 import CommunityDiscussion from '../models/communityDiscussion.model.js';
-import Discussion from '../models/discussion.model.js';
 import Sentiment from "sentiment";
 
 const analyzer = new Sentiment();
@@ -10,7 +9,7 @@ export const communityPulse= async (req, res) => {
   const { id } = req.params;
   const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
 
-  const discussions = await Discussion.find({
+  const discussions = await CommunityDiscussion.find({
     communityId: id,
     createdAt: { $gt: twelveHoursAgo },
     message: { $exists: true, $ne: "" },

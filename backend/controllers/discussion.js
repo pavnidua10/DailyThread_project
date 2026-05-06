@@ -1,5 +1,5 @@
 import Discussion from "../models/communityDiscussion.model.js";
-import sourceVerification from '../models/sourceVerificationSchema.model.js'
+import SourceVerification from '../models/sourceVerificationSchema.model.js'
 import axios from "axios";
 
 export const CLAIM_TYPE_LABELS = {
