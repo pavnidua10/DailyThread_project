@@ -764,9 +764,9 @@ const CommunityDetailPage = ({ currentUserId }) => {
                     {/* Vote row */}
                     {!isMe && (
                       <div className="flex items-center gap-3 mt-2">
-                        <button onClick={() => axios.post(`/communities/${id}/discussions/${d._id}/vote`, { vote: "up" }, { withCredentials: true }).then(fetchDiscussions)}
+                        <button onClick={() => axios.post(`/api/communities/${id}/discussions/${d._id}/vote`, { vote: "up" }, { withCredentials: true }).then(fetchDiscussions)}
                           className="text-xs text-gray-400 hover:text-green-600 transition">▲ {d.upvotes?.length || 0}</button>
-                        <button onClick={() => axios.post(`/communities/${id}/discussions/${d._id}/vote`, { vote: "down" }, { withCredentials: true }).then(fetchDiscussions)}
+                        <button onClick={() => axios.post(`/api/communities/${id}/discussions/${d._id}/vote`, { vote: "down" }, { withCredentials: true }).then(fetchDiscussions)}
                           className="text-xs text-gray-400 hover:text-red-500 transition">▼ {d.downvotes?.length || 0}</button>
                       </div>
                     )}

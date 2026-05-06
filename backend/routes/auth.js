@@ -14,9 +14,10 @@ router.get('/me', protect, (req, res) => {
   router.post('/follow', protect, followUser);
 router.post('/unfollow', protect, unfollowUser);
 router.get('/search', searchUsers);
+router.get("/:userId/credibility",getCredibility);
 router.get('/profile/:id', getUserProfile);
 router.get('/user/:id', getUser);
-router.get("/:userId/credibility",getCredibility);
+
 router.post("/profile-image", protect, upload.single("image"), uploadProfileImage);
 router.delete("/profile-image", protect, deleteProfilePhoto);
 
