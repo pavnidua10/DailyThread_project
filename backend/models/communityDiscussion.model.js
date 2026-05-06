@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const discussionSchema = new mongoose.Schema(
+const CommunityDiscussion = new mongoose.Schema(
   {
     communityId: {
       type: mongoose.Schema.Types.ObjectId,
