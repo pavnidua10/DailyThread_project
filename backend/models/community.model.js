@@ -1,5 +1,3 @@
-
-
 import mongoose from "mongoose";
 
 const communitySchema = new mongoose.Schema(
@@ -23,6 +21,22 @@ const communitySchema = new mongoose.Schema(
     ],
 
     members: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+  
+    articles: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Article",
+      },
+    ],
+
+
+    invites: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",

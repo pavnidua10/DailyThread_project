@@ -1,4 +1,4 @@
-import Discussion from "../models/communityDiscussion.model.js";
+import CommunityDiscussion from "../models/communityDiscussion.model.js";
 import SourceVerification from '../models/sourceVerificationSchema.model.js'
 import axios from "axios";
 
@@ -25,7 +25,7 @@ export const getDiscussions = async (req, res) => {
   try {
     const { communityId } = req.params;
 
-    const discussions = await Discussion.find({ communityId })
+    const discussions = await CommunityDiscussion.find({ communityId })
       .sort({ createdAt: 1 })
       .populate("author", "name profilePhoto _id")
       .populate("article")
@@ -76,7 +76,7 @@ export const createDiscussion = async (req, res) => {
       }
     }
 
-    const discussion = await Discussion.create({
+    const discussion = await CommunityDiscussion.create({
       communityId,
       author: req.user._id,
       message: message?.trim(),
@@ -104,7 +104,7 @@ export const voteDiscussion = async (req, res) => {
     const { vote } = req.body;
     const userId = req.user._id.toString();
 
-    const discussion = await Discussion.findById(discussionId);
+    const discussion = await CommunityDiscussion.findById(discussionId);
     if (!discussion) return res.status(404).json({ message: "Not found" });
 
     if (discussion.author.toString() === userId) {

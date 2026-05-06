@@ -1,4 +1,3 @@
-// controllers/activity.controller.js
 
 import Article from "../models/article.model.js";
 import DebateArgument from "../models/DebateArgument.js";
@@ -6,9 +5,6 @@ import CommunityVerdict from "../models/communityVerdictSchema.js";
 import Community from "../models/community.model.js";
 import User from "../models/user.js";
 
-// ─────────────────────────────────────────────────────────
-// GET USER ACTIVITY
-// ─────────────────────────────────────────────────────────
 export const getUserActivity = async (req, res) => {
   try {
     const { userId } = req.params;
