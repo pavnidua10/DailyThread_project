@@ -455,8 +455,8 @@ const ProfilePage = () => {
             ))}
           </div>
 
-          {activeTab === 'credibility' && <CredibilityPanel userId={userId} />}
-          {activeTab === 'achievements' && <AchievementsPanel credData={credData} />}
+        {activeTab === 'credibility' && <CredibilityPanel credData={credData} loading={loading} />}
+{activeTab === 'achievements' && <AchievementsPanel credData={credData} />}
 
           {activeTab === 'activity' && (
             <div className="cred-panel fade-up">

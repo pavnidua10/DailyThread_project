@@ -1,9 +1,8 @@
-
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect, useState, useCallback } from "react";
+import API from "../utils/api";
 import ArticleCard from "../components/ArticleCard";
-import { useUser } from "../Context/UserContext"; 
 import LoadingSpinner from "../components/LoadingSpinner";
+
 const categories = [
   { label: "All", value: "" },
   { label: "Politics", value: "politics" },
@@ -20,14 +19,29 @@ const regions = [
 ];
 
 const states = [
-  "Delhi", "Mumbai", "Kolkata", "Chennai", "Bengaluru",
-  "Uttar Pradesh", "Gujarat", "Punjab", "Kerala", "Rajasthan"
+  "Delhi",
+  "Mumbai",
+  "Kolkata",
+  "Chennai",
+  "Bengaluru",
+  "Uttar Pradesh",
+  "Gujarat",
+  "Punjab",
+  "Kerala",
+  "Rajasthan",
 ];
 
 const suggestedTopics = [
-  "Ukraine", "Climate Change", "Artificial Intelligence", "Elections",
-  "US Economy", "Global Health", "European Union", "Space Exploration",
-  "Renewable Energy", "Social Media Trends"
+  "Ukraine",
+  "Climate Change",
+  "Artificial Intelligence",
+  "Elections",
+  "US Economy",
+  "Global Health",
+  "European Union",
+  "Space Exploration",
+  "Renewable Energy",
+  "Social Media Trends",
 ];
 
 const moodPrompts = [
@@ -53,17 +67,14 @@ const NewsFeedPage = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const { user } = useUser(); 
-  const currentUserId = user?._id; 
-
-
   const getRegionParam = (stateName) => {
     if (!stateName) return "";
     return `${stateName.toLowerCase().replace(/\s+/g, "-")}-india`;
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
+
     try {
       let endpoint = "/articles/headlines";
       let params = { pageSize: 50 };
@@ -71,49 +82,81 @@ const NewsFeedPage = () => {
       if (activeTab === TAB_HEADLINES) {
         params.country = selectedRegion;
         if (selectedCategory) params.category = selectedCategory;
-        if (searchKeyword) params.q = searchKeyword;
-      } else if (activeTab === TAB_ARTICLES) {
+        if (searchKeyword.trim()) params.q = searchKeyword.trim();
+      }
+
+      if (activeTab === TAB_ARTICLES) {
         endpoint = "/articles/relevant";
         params.country = selectedRegion;
         if (selectedCategory) params.category = selectedCategory;
-        if (searchKeyword) params.q = searchKeyword;
-      } else if (activeTab === TAB_REGIONAL && selectedState) {
+        if (searchKeyword.trim()) params.q = searchKeyword.trim();
+      }
+
+      if (activeTab === TAB_REGIONAL) {
+        if (!selectedState) {
+          setArticles([]);
+          return;
+        }
         params.country = "in";
         params.region = getRegionParam(selectedState);
-        if (searchKeyword) params.q = searchKeyword;
-      } else if (activeTab === TAB_TOPICS && selectedTopic) {
+        if (searchKeyword.trim()) params.q = searchKeyword.trim();
+      }
+
+      if (activeTab === TAB_TOPICS) {
+        if (!selectedTopic) {
+          setArticles([]);
+          return;
+        }
         params.country = selectedRegion;
         params.q = selectedTopic;
       }
 
-      const { data } = await axios.get(endpoint, { params });
-      setArticles(data.articles || []);
+      const { data } = await API.get(endpoint, { params });
+      setArticles(data?.articles || []);
     } catch (error) {
-      console.error("Error fetching data:", error.message);
+      console.error("Error fetching data:", error?.response?.data || error.message);
       setArticles([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    activeTab,
+    selectedCategory,
+    selectedRegion,
+    selectedState,
+    selectedTopic,
+    searchKeyword,
+  ]);
 
   useEffect(() => {
     fetchData();
-   
-  }, [selectedCategory, selectedRegion, selectedState, selectedTopic, searchKeyword, activeTab]);
+  }, [fetchData]);
 
- 
+  const handleTabChange = (tab) => {
+    setSearchKeyword("");
+    setSelectedTopic("");
+    setSelectedState("");
+    setSelectedCategory("");
+    setActiveTab(tab);
+  };
+
   const renderArticles = () => {
-   if (loading) return <LoadingSpinner />;
+    if (loading) return <LoadingSpinner />;
 
-    if (!articles.length) return <p>No articles found.</p>;
+    if (!articles.length) {
+      return (
+        <p className="text-gray-500 text-sm">
+          No articles found for the selected filters.
+        </p>
+      );
+    }
 
     return (
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
         {articles.map((article, idx) => (
           <ArticleCard
             key={article._id || article.url || idx}
             article={article}
-            currentUserId={currentUserId}
           />
         ))}
       </div>
@@ -124,25 +167,20 @@ const NewsFeedPage = () => {
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-4">News Feed</h1>
 
-      {/* Tabs */}
       <div className="mb-6 flex gap-4 flex-wrap">
         {[TAB_HEADLINES, TAB_ARTICLES, TAB_REGIONAL, TAB_TOPICS].map((tab) => (
           <button
             key={tab}
-            onClick={() => {
-              setSearchKeyword("");
-              setSelectedTopic("");
-              setSelectedState("");
-              setActiveTab(tab);
-            }}
-            className={`px-4 py-2 rounded ${activeTab === tab ? "bg-blue-600 text-white" : "bg-gray-200"}`}
+            onClick={() => handleTabChange(tab)}
+            className={`px-4 py-2 rounded ${
+              activeTab === tab ? "bg-blue-600 text-white" : "bg-gray-200"
+            }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
 
-     
       <div className="mb-4">
         <input
           type="text"
@@ -153,13 +191,15 @@ const NewsFeedPage = () => {
         />
       </div>
 
-      
       <div className="flex gap-2 flex-wrap mb-4">
         {moodPrompts.map((mood) => (
           <button
             key={mood.label}
             onClick={() => {
               setSearchKeyword(mood.value);
+              setSelectedCategory("");
+              setSelectedTopic("");
+              setSelectedState("");
               setActiveTab(TAB_ARTICLES);
             }}
             className="text-sm bg-yellow-100 hover:bg-yellow-200 px-3 py-1 rounded-full"
@@ -169,31 +209,34 @@ const NewsFeedPage = () => {
         ))}
       </div>
 
-     
       {activeTab === TAB_ARTICLES && (
-        <div className="flex gap-4 mb-6">
+        <div className="flex gap-4 mb-6 flex-wrap">
           <select
             className="border rounded px-3 py-2"
             value={selectedRegion}
             onChange={(e) => setSelectedRegion(e.target.value)}
           >
             {regions.map((region) => (
-              <option key={region.value} value={region.value}>{region.label}</option>
+              <option key={region.value} value={region.value}>
+                {region.label}
+              </option>
             ))}
           </select>
+
           <select
             className="border rounded px-3 py-2"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
           >
             {categories.map((cat) => (
-              <option key={cat.value} value={cat.value}>{cat.label}</option>
+              <option key={cat.value} value={cat.value}>
+                {cat.label}
+              </option>
             ))}
           </select>
         </div>
       )}
 
-      {/* Filters for Regional News */}
       {activeTab === TAB_REGIONAL && (
         <div className="mb-6">
           <select
@@ -203,15 +246,16 @@ const NewsFeedPage = () => {
           >
             <option value="">Select State</option>
             {states.map((state) => (
-              <option key={state} value={state}>{state}</option>
+              <option key={state} value={state}>
+                {state}
+              </option>
             ))}
           </select>
         </div>
       )}
 
-      {/* Filters for Suggested Topics */}
       {activeTab === TAB_TOPICS && (
-        <div className="mb-6">
+        <div className="mb-6 flex gap-4 flex-wrap">
           <select
             className="border rounded px-3 py-2"
             value={selectedTopic}
@@ -219,7 +263,21 @@ const NewsFeedPage = () => {
           >
             <option value="">Select Topic</option>
             {suggestedTopics.map((topic) => (
-              <option key={topic} value={topic}>{topic}</option>
+              <option key={topic} value={topic}>
+                {topic}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="border rounded px-3 py-2"
+            value={selectedRegion}
+            onChange={(e) => setSelectedRegion(e.target.value)}
+          >
+            {regions.map((region) => (
+              <option key={region.value} value={region.value}>
+                {region.label}
+              </option>
             ))}
           </select>
         </div>

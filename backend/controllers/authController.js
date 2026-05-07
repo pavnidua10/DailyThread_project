@@ -135,6 +135,14 @@ export const getUserProfile = async (req, res) => {
 export const getCredibility = async (req, res) => {
   try {
     const { userId } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user id" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     const cached = await CredibilityScore.findOne({ 
       userId, 

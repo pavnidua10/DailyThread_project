@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import UserSearchBar from "../components/UserSearchBar";
-import UserProfile from "../components/UserProfile";
 import API from "../utils/api";
 import { useNavigate } from "react-router-dom";
 
@@ -8,7 +7,6 @@ const SearchUsersPage = ({ currentUserId }) => {
   const [activeTab, setActiveTab] = useState("users");
 
   const [suggestedUsers, setSuggestedUsers] = useState([]);
-  const [searchedUserId, setSearchedUserId] = useState(null);
 
   const [communityQuery, setCommunityQuery] = useState("");
   const [communities, setCommunities] = useState([]);
@@ -19,7 +17,9 @@ const SearchUsersPage = ({ currentUserId }) => {
   const normalizedCurrentUserId = currentUserId?.toString();
 
   const normalizeId = (value) =>
-    typeof value === "object" && value !== null ? value._id?.toString() : value?.toString();
+    typeof value === "object" && value !== null
+      ? value._id?.toString()
+      : value?.toString();
 
   useEffect(() => {
     fetchSuggestedUsers();
@@ -31,6 +31,7 @@ const SearchUsersPage = ({ currentUserId }) => {
       const res = await API.get("/profiles/suggested", {
         withCredentials: true,
       });
+
       setSuggestedUsers(res.data || []);
     } catch (error) {
       console.error(error);
@@ -48,7 +49,10 @@ const SearchUsersPage = ({ currentUserId }) => {
 
   const searchCommunities = async () => {
     try {
-      const res = await API.get(`/communities/search?query=${communityQuery}`);
+      const res = await API.get(
+        `/communities/search?query=${communityQuery}`
+      );
+
       setCommunities(res.data || []);
     } catch (err) {
       console.error(err);
@@ -78,14 +82,19 @@ const SearchUsersPage = ({ currentUserId }) => {
   };
 
   const isUserMember = (community) => {
-    return community.members?.some((m) => normalizeId(m) === normalizedCurrentUserId);
+    return community.members?.some(
+      (m) => normalizeId(m) === normalizedCurrentUserId
+    );
   };
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Discover</h1>
-        <p className="text-gray-500">Find people and communities</p>
+
+        <p className="text-gray-500">
+          Find people and communities
+        </p>
       </div>
 
       <div className="flex gap-6 mb-10 border-b pb-3">
@@ -114,60 +123,54 @@ const SearchUsersPage = ({ currentUserId }) => {
 
       {activeTab === "users" && (
         <>
-          {searchedUserId ? (
-            <>
-              <button
-                className="text-blue-600 mb-6 hover:underline"
-                onClick={() => setSearchedUserId(null)}
+          <div className="mb-10">
+            <UserSearchBar
+              onUserClick={(id) => navigate(`/profile/${id}`)}
+            />
+          </div>
+
+          <h2 className="text-2xl font-semibold mb-6">
+            Suggested Users
+          </h2>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {suggestedUsers.map((user) => (
+              <div
+                key={user._id}
+                className="bg-white shadow-md rounded-xl p-6"
               >
-                ← Back
-              </button>
+                <div className="flex items-center gap-4 mb-4">
+                  <img
+                    src={
+                      user.profilePhoto ||
+                      `https://ui-avatars.com/api/?name=${user.name}`
+                    }
+                    alt={user.name}
+                    className="w-14 h-14 rounded-full object-cover"
+                  />
 
-              <UserProfile
-                userId={searchedUserId}
-                currentUserId={currentUserId}
-              />
-            </>
-          ) : (
-            <>
-              <div className="mb-10">
-                <UserSearchBar onUserClick={setSearchedUserId} />
-              </div>
+                  <div>
+                    <h3 className="font-semibold">
+                      {user.name}
+                    </h3>
 
-              <h2 className="text-2xl font-semibold mb-6">Suggested Users</h2>
-
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {suggestedUsers.map((user) => (
-                  <div
-                    key={user._id}
-                    className="bg-white shadow-md rounded-xl p-6"
-                  >
-                    <div className="flex items-center gap-4 mb-4">
-                      <img
-                        src={
-                          user.profilePhoto ||
-                          `https://ui-avatars.com/api/?name=${user.name}`
-                        }
-                        alt={user.name}
-                        className="w-14 h-14 rounded-full object-cover"
-                      />
-                      <div>
-                        <h3 className="font-semibold">{user.name}</h3>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => setSearchedUserId(user._id)}
-                      className="w-full bg-blue-600 text-white py-2 rounded-lg"
-                    >
-                      View Profile
-                    </button>
+                    <p className="text-sm text-gray-500">
+                      {user.email}
+                    </p>
                   </div>
-                ))}
+                </div>
+
+                <button
+                  onClick={() =>
+                    navigate(`/profile/${user._id}`)
+                  }
+                  className="w-full bg-blue-600 text-white py-2 rounded-lg"
+                >
+                  View Profile
+                </button>
               </div>
-            </>
-          )}
+            ))}
+          </div>
         </>
       )}
 
@@ -178,9 +181,12 @@ const SearchUsersPage = ({ currentUserId }) => {
               type="text"
               placeholder="Search communities..."
               value={communityQuery}
-              onChange={(e) => setCommunityQuery(e.target.value)}
+              onChange={(e) =>
+                setCommunityQuery(e.target.value)
+              }
               className="flex-1 border rounded-lg px-4 py-2"
             />
+
             <button
               onClick={searchCommunities}
               className="bg-blue-600 text-white px-6 rounded-lg"
@@ -198,7 +204,9 @@ const SearchUsersPage = ({ currentUserId }) => {
                   key={community._id}
                   className="bg-white rounded-xl shadow-md p-6"
                 >
-                  <h3 className="text-lg font-semibold mb-2">{community.name}</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    {community.name}
+                  </h3>
 
                   <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                     {community.description}
@@ -210,7 +218,11 @@ const SearchUsersPage = ({ currentUserId }) => {
 
                   <div className="flex justify-between items-center">
                     <button
-                      onClick={() => navigate(`/communities/${community._id}`)}
+                      onClick={() =>
+                        navigate(
+                          `/communities/${community._id}`
+                        )
+                      }
                       className="text-blue-600 text-sm hover:underline"
                     >
                       View
@@ -222,11 +234,17 @@ const SearchUsersPage = ({ currentUserId }) => {
                       </button>
                     ) : (
                       <button
-                        onClick={() => handleJoin(community._id)}
-                        disabled={joiningId === community._id}
+                        onClick={() =>
+                          handleJoin(community._id)
+                        }
+                        disabled={
+                          joiningId === community._id
+                        }
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"
                       >
-                        {joiningId === community._id ? "Joining..." : "Join"}
+                        {joiningId === community._id
+                          ? "Joining..."
+                          : "Join"}
                       </button>
                     )}
                   </div>

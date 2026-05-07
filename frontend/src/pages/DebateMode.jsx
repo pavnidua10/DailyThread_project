@@ -510,7 +510,7 @@ export default function DebateMode({ articleId, currentUserId }) {
   const fetchDebate = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await API.get(`/articles/${articleId}/debate`);
+      const res = await API.get(`/api/articles/${articleId}/debate`);
       setArgs(res.data.arguments || []);
       setSummary(res.data.summary || null);
     } catch (err) {
@@ -527,7 +527,7 @@ export default function DebateMode({ articleId, currentUserId }) {
   const handleSubmit = async (side, text) => {
     try {
       setSubmit(true);
-      await API.post(`/articles/${articleId}/debate`, { side, text });
+      await API.post(`/api/articles/${articleId}/debate`, { side, text });
       await fetchDebate();
     } catch (err) {
       console.error(err);
@@ -538,7 +538,7 @@ export default function DebateMode({ articleId, currentUserId }) {
 
   const handleVote = async (argId, vote) => {
     try {
-      await API.post(`/articles/${articleId}/debate/${argId}/vote`, { vote });
+      await API.post(`/api/articles/${articleId}/debate/${argId}/vote`, { vote });
       await fetchDebate();
     } catch (err) {
       console.error(err);
@@ -548,7 +548,7 @@ export default function DebateMode({ articleId, currentUserId }) {
   const handleSummarize = async () => {
     try {
       setSumLoad(true);
-      const res = await API.post(`/articles/${articleId}/debate/summarize`, {});
+      const res = await API.post(`/api/articles/${articleId}/debate/summarize`, {});
       setSummary(res.data);
     } catch (err) {
       console.error(err);
