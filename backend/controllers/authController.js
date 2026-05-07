@@ -1,9 +1,11 @@
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import User from '../models/user.js';
 import Profile from "../models/profile.model.js";
 import Article from '../models/article.model.js';
-import DebateArgument from '../models/DebateArgument.js'
+import DebateArgument from '../models/DebateArgument.js';
 import CredibilityScore from '../models/CredibilityScore.js';
+
 export const generateToken = (res, userId) => {
   const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
     expiresIn: '7d',
@@ -11,13 +13,11 @@ export const generateToken = (res, userId) => {
 
   res.cookie('jwt', token, {
     httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
-
-
 
 export const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
@@ -70,7 +70,6 @@ export const registerUser = async (req, res) => {
   }
 };
 
-
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -87,7 +86,6 @@ export const loginUser = async (req, res) => {
   }
 };
 
-
 export const logoutUser = (req, res) => {
   res.cookie('jwt', '', {
     httpOnly: true,
@@ -96,19 +94,24 @@ export const logoutUser = (req, res) => {
 
   return res.status(200).json({ message: 'Logged out successfully' });
 };
+
 export const followUser = async (req, res) => {
   const { userId } = req.body;
   const currentUser = req.user._id;
+
   await User.findByIdAndUpdate(userId, { $addToSet: { followers: currentUser } });
   await User.findByIdAndUpdate(currentUser, { $addToSet: { following: userId } });
+
   res.json({ message: 'Followed user' });
 };
 
 export const unfollowUser = async (req, res) => {
   const { userId } = req.body;
   const currentUser = req.user._id;
+
   await User.findByIdAndUpdate(userId, { $pull: { followers: currentUser } });
   await User.findByIdAndUpdate(currentUser, { $pull: { following: userId } });
+
   res.json({ message: 'Unfollowed user' });
 };
 
@@ -118,83 +121,98 @@ export const searchUsers = async (req, res) => {
   const users = await User.find({ name: regex }, 'name email bio followers following communities profilePhoto');
   res.json(users);
 };
-export const getUser= async (req, res) => {
+
+export const getUser = async (req, res) => {
   const user = await User.findById(req.params.id)
     .select('name email bio followers following communities profilePhoto');
   const articles = await Article.find({ authorId: req.params.id });
   res.json({ user, articles });
 };
+
 export const getUserProfile = async (req, res) => {
   const user = await User.findById(req.params.id)
     .select('name email bio followers following communities profilePhoto')
-    .populate('communities', 'name'); 
-    const articles = await Article.find({ authorId: req.params.id });
+    .populate('communities', 'name');
+  const articles = await Article.find({ authorId: req.params.id });
   res.json({ user, articles });
 };
 
 export const getCredibility = async (req, res) => {
   try {
     const { userId } = req.params;
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: "Invalid user id" });
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
+    const cached = await CredibilityScore.findOne({
+      userId,
+      updatedAt: { $gt: new Date(Date.now() - 86400000) }
+    });
+
+    if (cached) {
+      return res.json(cached.data);
+    }
+
+    const [foundUser, articles, debateArgs] = await Promise.all([
+      User.findById(userId),
+      Article.find({ authorId: userId }),
+      DebateArgument.find({ authorId: userId }),
+    ]);
+
+    if (!foundUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const cached = await CredibilityScore.findOne({ 
-      userId, 
-      updatedAt: { $gt: new Date(Date.now() - 86400000) } 
-    });
-    if (cached) return res.json(cached.data);
-
-    const [user, articles, debateArgs] = await Promise.all([
-      User.findById(userId),
-      Article.find({ authorId: userId }),
-      DebateArgument.find({ "authorId._id": userId }),
-    ]);
-
-    if (!user) return res.status(404).json({ message: "User not found" });
-
     const articlesPublished = articles.length;
-    const totalUpvotes = articles.reduce((s, a) => s + (a.upvotes?.length || 0), 0);
-    const avgRating = articles.length
-      ? articles.reduce((s, a) => s + (a.rating || 0), 0) / articles.length
+    const totalUpvotes = articles.reduce((sum, article) => sum + (article.upvotes?.length || 0), 0);
+    const avgRating = articlesPublished
+      ? articles.reduce((sum, article) => sum + (article.rating || 0), 0) / articlesPublished
       : 0;
-    const flaggedCount = user.moderationFlags || 0;
-    const daysAsMember = Math.max(1, (Date.now() - user.createdAt) / 86400000);
+
+    const flaggedCount = foundUser.moderationFlags || 0;
+    const daysAsMember = Math.max(1, (Date.now() - new Date(foundUser.createdAt).getTime()) / 86400000);
     const netDebateVotes = debateArgs.reduce(
-      (s, a) => s + (a.upvotes?.length || 0) - (a.downvotes?.length || 0), 0
+      (sum, arg) => sum + (arg.upvotes?.length || 0) - (arg.downvotes?.length || 0),
+      0
     );
 
     const breakdown = {
-      articleQuality:   Math.round(Math.min(30, (avgRating / 5) * 30)),
-      sourceAccuracy:   Math.round(Math.min(25, (articles.filter(a => a.source).length / Math.max(1, articlesPublished)) * 25)),
-      communityTrust:   Math.round(Math.min(20, totalUpvotes / 10)),
-      consistencyBonus: Math.round(Math.max(0, Math.min(15, (articlesPublished / (daysAsMember / 7)) * 3) - flaggedCount * 5)),
-      debateScore:      Math.round(Math.min(10, Math.max(0, netDebateVotes / 5))),
+      articleQuality: Math.round(Math.min(30, (avgRating / 5) * 30)),
+      sourceAccuracy: Math.round(
+        Math.min(25, (articles.filter(article => article.source).length / Math.max(1, articlesPublished)) * 25)
+      ),
+      communityTrust: Math.round(Math.min(20, totalUpvotes / 10)),
+      consistencyBonus: Math.round(
+        Math.max(0, Math.min(15, (articlesPublished / (daysAsMember / 7)) * 3) - flaggedCount * 5)
+      ),
+      debateScore: Math.round(Math.min(10, Math.max(0, netDebateVotes / 5))),
     };
 
-    const total = Math.min(100, Math.max(0, Object.values(breakdown).reduce((s, v) => s + v, 0)));
+    const total = Math.min(
+      100,
+      Math.max(0, Object.values(breakdown).reduce((sum, value) => sum + value, 0))
+    );
 
     const scoreData = {
-      total, breakdown, articlesPublished,
-      flaggedCount, endorsedBy: totalUpvotes,
+      total,
+      breakdown,
+      articlesPublished,
+      flaggedCount,
+      endorsedBy: totalUpvotes,
       joinedDaysAgo: Math.round(daysAsMember),
     };
 
     await CredibilityScore.findOneAndUpdate(
       { userId },
       { userId, data: scoreData, updatedAt: new Date() },
-      { upsert: true }
+      { upsert: true, new: true }
     );
 
-    res.json(scoreData);
+    return res.json(scoreData);
   } catch (err) {
     console.error("getCredibility error:", err);
-    res.status(500).json({ message: "Failed to compute credibility score" });
+    return res.status(500).json({ message: "Failed to compute credibility score" });
   }
 };
 
