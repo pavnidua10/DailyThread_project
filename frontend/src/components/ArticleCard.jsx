@@ -1,68 +1,81 @@
 import { useState } from 'react';
-import { Bookmark, BookmarkCheck, Share2, User } from 'lucide-react';
-import axios from 'axios';
+import { Bookmark, BookmarkCheck, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import FullArticleModal from './ArticleDetails';
 import ArticleReview from './ArticleReview';
 import ArticleDiscussion from './ArticleDiscussion';
 import { useNavigate } from 'react-router-dom';
-
+import API from '../utils/api';
 
 const TIERS = [
-  { min: 85, label: 'Authority',      color: '#7C3AED', bg: '#EDE9FE', icon: '◆' },
+  { min: 85, label: 'Authority', color: '#7C3AED', bg: '#EDE9FE', icon: '◆' },
   { min: 70, label: 'Verified Voice', color: '#0369A1', bg: '#E0F2FE', icon: '✦' },
-  { min: 50, label: 'Contributor',    color: '#065F46', bg: '#D1FAE5', icon: '●' },
-  { min: 30, label: 'Emerging',       color: '#92400E', bg: '#FEF3C7', icon: '○' },
-  { min: 0,  label: 'Newcomer',       color: '#6B7280', bg: '#F3F4F6', icon: '·' },
+  { min: 50, label: 'Contributor', color: '#065F46', bg: '#D1FAE5', icon: '●' },
+  { min: 30, label: 'Emerging', color: '#92400E', bg: '#FEF3C7', icon: '○' },
+  { min: 0, label: 'Newcomer', color: '#6B7280', bg: '#F3F4F6', icon: '·' },
 ];
-function getTier(score) { return TIERS.find(t => score >= t.min) || TIERS[4]; }
+
+function getTier(score) {
+  return TIERS.find(t => score >= t.min) || TIERS[4];
+}
 
 function CredChip({ score }) {
   if (score == null) return null;
   const tier = getTier(score);
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 3,
-      fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 999,
-      background: tier.bg, color: tier.color,
-      border: `1px solid ${tier.color}22`,
-      fontFamily: "'DM Sans', sans-serif",
-      whiteSpace: 'nowrap',
-    }}>
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 3,
+        fontSize: 10,
+        fontWeight: 700,
+        padding: '1px 7px',
+        borderRadius: 999,
+        background: tier.bg,
+        color: tier.color,
+        border: `1px solid ${tier.color}22`,
+        fontFamily: "'DM Sans', sans-serif",
+        whiteSpace: 'nowrap',
+      }}
+    >
       {tier.icon} {score}
     </span>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   CATEGORY PILL
-───────────────────────────────────────────────────────────────── */
 const CATEGORY_COLORS = {
-  Politics:    { bg: '#FEE2E2', color: '#991B1B' },
-  Sports:      { bg: '#D1FAE5', color: '#065F46' },
-  Technology:  { bg: '#E0F2FE', color: '#0369A1' },
-  Health:      { bg: '#FEF3C7', color: '#92400E' },
-  Finance:     { bg: '#EDE9FE', color: '#5B21B6' },
-  Education:   { bg: '#F0FDF4', color: '#166534' },
-  MentalHealth:{ bg: '#FDF4FF', color: '#86198F' },
+  Politics: { bg: '#FEE2E2', color: '#991B1B' },
+  Sports: { bg: '#D1FAE5', color: '#065F46' },
+  Technology: { bg: '#E0F2FE', color: '#0369A1' },
+  Health: { bg: '#FEF3C7', color: '#92400E' },
+  Finance: { bg: '#EDE9FE', color: '#5B21B6' },
+  Education: { bg: '#F0FDF4', color: '#166534' },
+  MentalHealth: { bg: '#FDF4FF', color: '#86198F' },
 };
+
 function CategoryPill({ category }) {
   if (!category) return null;
   const cfg = CATEGORY_COLORS[category] || { bg: '#F3F4F6', color: '#374151' };
   return (
-    <span style={{
-      fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 999,
-      background: cfg.bg, color: cfg.color, letterSpacing: '.04em',
-      textTransform: 'uppercase', fontFamily: "'DM Sans', sans-serif",
-    }}>
+    <span
+      style={{
+        fontSize: 10,
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: 999,
+        background: cfg.bg,
+        color: cfg.color,
+        letterSpacing: '.04em',
+        textTransform: 'uppercase',
+        fontFamily: "'DM Sans', sans-serif",
+      }}
+    >
       {category}
     </span>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   STYLES
-───────────────────────────────────────────────────────────────── */
 const CARD_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -167,9 +180,6 @@ const CARD_STYLES = `
   .article-card { animation: cardFadeIn .3s ease both; }
 `;
 
-/* ─────────────────────────────────────────────────────────────────
-   MAIN COMPONENT
-───────────────────────────────────────────────────────────────── */
 const ArticleCard = ({
   article,
   onSaveToggle,
@@ -178,80 +188,122 @@ const ArticleCard = ({
   className = '',
   isChatView = false,
 }) => {
-  const isUserArticle = !!article.authorId && article.external !== true;
-
-  const [saved,             setSaved]            = useState(!!isSavedTab);
-  const [showModal,         setShowModal]         = useState(false);
-  const [showShare,         setShowShare]         = useState(false);
-  const [communities,       setCommunities]       = useState([]);
+  const [saved, setSaved] = useState(!!isSavedTab);
+  const [showModal, setShowModal] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [communities, setCommunities] = useState([]);
   const [selectedCommunity, setSelectedCommunity] = useState('');
   const navigate = useNavigate();
 
-  // Resolve author info — authorId may be a populated object or just an ID string
-  const author      = typeof article.authorId === 'object' ? article.authorId : null;
-  const authorName  = author?.name  || article.authorName  || null;
-  const authorEmail = author?.email || article.authorEmail || null;
-  const authorPhoto = author?.profilePhoto || null;
-  const authorCred  = author?.credibilityScore ?? null;
+  const normalizedCurrentUserId = currentUserId?.toString();
 
-  /* ── SAVE ── */
+  const authorObj = typeof article.authorId === 'object' && article.authorId !== null ? article.authorId : null;
+  const authorId = authorObj?._id?.toString() || article.authorId?.toString() || null;
+
+  const isInternalArticle = !!authorId && article.external !== true;
+  const isAuthor = !!authorId && !!normalizedCurrentUserId && authorId === normalizedCurrentUserId;
+
+  const authorName = authorObj?.name || article.authorName || null;
+  const authorEmail = authorObj?.email || article.authorEmail || null;
+  const authorPhoto = authorObj?.profilePhoto || null;
+  const authorCred = authorObj?.credibilityScore ?? null;
+
+  const normalizeMemberId = (m) =>
+    typeof m === 'object' && m !== null ? m._id?.toString() : m?.toString();
+
   const toggleSave = async (e) => {
     e.stopPropagation();
     try {
       if (isSavedTab || saved) {
-        await axios.post('/articles/unsave', { articleId: article._id, url: article.url });
+        await API.post('/articles/unsave', { articleId: article._id, url: article.url });
         setSaved(false);
         toast.success('Removed from saved');
         if (onSaveToggle) onSaveToggle();
       } else {
-        await axios.post('/articles/save',
-          isUserArticle
+        await API.post(
+          '/articles/save',
+          isInternalArticle
             ? { articleId: article._id }
-            : { title: article.title, url: article.url, description: article.description, imageUrl: article.imageUrl || article.urlToImage, source: article.source?.name || article.source, publishedAt: article.publishedAt }
+            : {
+                title: article.title,
+                url: article.url,
+                description: article.description || article.content || '',
+                imageUrl: article.imageUrl || article.urlToImage,
+                source: article.source?.name || article.source,
+                publishedAt: article.publishedAt,
+              }
         );
         setSaved(true);
         toast.success('Saved!');
         if (onSaveToggle) onSaveToggle();
       }
-    } catch { toast.error('Failed to update saved status'); }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update saved status');
+    }
   };
 
-  /* ── SHARE ── */
   const handleShareClick = async (e) => {
     e.stopPropagation();
-    setShowShare(prev => !prev);
-    if (!showShare && communities.length === 0) {
+    const next = !showShare;
+    setShowShare(next);
+
+    if (next && communities.length === 0) {
       try {
-        const res = await axios.get('/communities/search?query=');
-        setCommunities(res.data.filter(c => c.members.some(m => m === currentUserId || m._id === currentUserId)));
-      } catch { toast.error('Failed to load communities'); }
+        const res = await API.get('/communities/search?query=');
+        const joinedCommunities = (res.data || []).filter((c) =>
+          c.members?.some((m) => normalizeMemberId(m) === normalizedCurrentUserId)
+        );
+        setCommunities(joinedCommunities);
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to load communities');
+      }
     }
   };
 
   const handleShare = async (e) => {
     e.stopPropagation();
     if (!selectedCommunity) return;
+
     try {
-      await axios.post(`/communities/${selectedCommunity}/share-article`,
-        isUserArticle
+      await API.post(
+        `/communities/${selectedCommunity}/share-article`,
+        isInternalArticle
           ? { articleId: article._id }
-          : { title: article.title, url: article.url, description: article.description, imageUrl: article.imageUrl || article.urlToImage, source: article.source?.name || article.source, publishedAt: article.publishedAt }
+          : {
+              title: article.title,
+              url: article.url,
+              description: article.description || article.content || '',
+              imageUrl: article.imageUrl || article.urlToImage,
+              source: article.source?.name || article.source,
+              publishedAt: article.publishedAt,
+            }
       );
+
       toast.success('Shared to community!');
       setShowShare(false);
       setSelectedCommunity('');
       navigate(`/communities/${selectedCommunity}`);
-    } catch { toast.error('Failed to share article'); }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to share article');
+    }
   };
 
-  /* ── CONTENT ── */
-  const fullContent  = article.content || article.description || '';
-  const previewText  = isChatView ? fullContent : fullContent.slice(0, 200);
-  const isTruncated  = !isChatView && fullContent.length > 200;
-  const imageSrc     = article.imageUrl || article.urlToImage;
-  const publishedDate = article.publishedAt || article.createdAt
-    ? new Date(article.publishedAt || article.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-    : null;
+  const fullContent = article.content || article.description || '';
+  const previewText = isChatView ? fullContent : fullContent.slice(0, 200);
+  const isTruncated = !isChatView && fullContent.length > 200;
+  const imageSrc = article.imageUrl || article.urlToImage;
+
+  const publishedDate =
+    article.publishedAt || article.createdAt
+      ? new Date(article.publishedAt || article.createdAt).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        })
+      : null;
 
   return (
     <>
@@ -259,33 +311,34 @@ const ArticleCard = ({
 
       <div
         className={`article-card ${isChatView ? 'chat-view' : ''} ${className}`}
-        onClick={() => { if (isUserArticle && !isChatView) setShowModal(true); }}
+        onClick={() => {
+          if (isInternalArticle && !isChatView) setShowModal(true);
+        }}
       >
-        {/* IMAGE */}
         {imageSrc && <img src={imageSrc} alt={article.title} className="card-image" />}
 
         <div className="card-body">
-          {/* CATEGORY + DATE */}
           <div className="card-category-row">
             <CategoryPill category={article.category} />
-            {publishedDate && <span style={{ fontSize: 10, color: '#9CA3AF', marginLeft: 'auto' }}>{publishedDate}</span>}
+            {publishedDate && (
+              <span style={{ fontSize: 10, color: '#9CA3AF', marginLeft: 'auto' }}>
+                {publishedDate}
+              </span>
+            )}
           </div>
 
-          {/* TITLE */}
-          <h2 className={`card-title ${isUserArticle && !isChatView ? 'clickable' : ''}`}>
+          <h2 className={`card-title ${isInternalArticle && !isChatView ? 'clickable' : ''}`}>
             {article.title}
           </h2>
 
-          {/* AUTHOR ROW — only for user articles */}
-          {isUserArticle && authorName && (
+          {isInternalArticle && authorName && (
             <div className="card-author-row">
               <div className="card-author-avatar">
-                {authorPhoto
-                  ? <img src={authorPhoto} alt={authorName} />
-                  : authorName[0].toUpperCase()
-                }
+                {authorPhoto ? <img src={authorPhoto} alt={authorName} /> : authorName[0].toUpperCase()}
               </div>
-              <span className="card-author-name">{authorName}</span>
+              <span className="card-author-name">
+                {authorName} {isAuthor ? '(You)' : ''}
+              </span>
               {authorEmail && (
                 <>
                   <span className="card-dot" />
@@ -301,43 +354,54 @@ const ArticleCard = ({
             </div>
           )}
 
-          {/* External source */}
-          {!isUserArticle && (article.source?.name || article.source) && (
+          {!isInternalArticle && (article.source?.name || article.source) && (
             <p className="card-source" style={{ marginBottom: 8 }}>
               {article.source?.name || article.source}
             </p>
           )}
 
-          {/* CONTENT */}
-          <p className={`card-content ${isChatView ? 'full' : ''}`}>
-            {previewText}
-          </p>
+          <p className={`card-content ${isChatView ? 'full' : ''}`}>{previewText}</p>
 
-          {/* FOOTER */}
           <div className="card-footer">
-            {/* Read more / external link */}
             <div>
-              {!isChatView && isTruncated && isUserArticle && (
-                <span className="card-readmore" onClick={e => { e.stopPropagation(); setShowModal(true); }}>
+              {!isChatView && isTruncated && isInternalArticle && (
+                <span
+                  className="card-readmore"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowModal(true);
+                  }}
+                >
                   Read more →
                 </span>
               )}
-              {!isChatView && !isUserArticle && article.url && (
-                <a href={article.url} target="_blank" rel="noreferrer" className="card-readmore" onClick={e => e.stopPropagation()}>
+
+              {!isChatView && !isInternalArticle && article.url && (
+                <a
+                  href={article.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="card-readmore"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   Read original →
                 </a>
               )}
             </div>
 
-            {/* Actions */}
             {!isChatView && (
               <div className="card-actions">
-                <button className={`card-btn ${saved || isSavedTab ? 'saved' : ''}`} onClick={toggleSave} title={saved ? 'Unsave' : 'Save'}>
+                <button
+                  className={`card-btn ${saved || isSavedTab ? 'saved' : ''}`}
+                  onClick={toggleSave}
+                  title={saved ? 'Unsave' : 'Save'}
+                >
                   {(isSavedTab || saved)
                     ? <BookmarkCheck size={16} className="text-blue-500" />
                     : <Bookmark size={16} className="text-gray-500" />
                   }
                 </button>
+
                 <button className="card-btn" onClick={handleShareClick} title="Share to community">
                   <Share2 size={16} className="text-green-600" />
                 </button>
@@ -345,8 +409,7 @@ const ArticleCard = ({
             )}
           </div>
 
-          {/* REVIEW + DISCUSSION — non-chat user articles */}
-          {isUserArticle && !isChatView && (
+          {isInternalArticle && !isChatView && (
             <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #f0ece4' }}>
               <ArticleReview articleId={article._id} />
               <ArticleDiscussion articleId={article._id} />
@@ -354,29 +417,46 @@ const ArticleCard = ({
           )}
         </div>
 
-        {/* SHARE DROPDOWN */}
         {showShare && !isChatView && (
-          <div className="share-dropdown" onClick={e => e.stopPropagation()}>
-            <p style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Share to community</p>
-            {communities.length === 0
-              ? <p style={{ fontSize: 12, color: '#9CA3AF' }}>You haven't joined any communities yet.</p>
-              : (
-                <>
-                  <select value={selectedCommunity} onChange={e => setSelectedCommunity(e.target.value)} className="share-select">
-                    <option value="">Select community…</option>
-                    {communities.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                  </select>
-                  <button className="share-btn" onClick={handleShare} disabled={!selectedCommunity}>Share</button>
-                </>
-              )
-            }
+          <div className="share-dropdown" onClick={(e) => e.stopPropagation()}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 8 }}>
+              Share to community
+            </p>
+
+            {communities.length === 0 ? (
+              <p style={{ fontSize: 12, color: '#9CA3AF' }}>
+                You haven't joined any communities yet.
+              </p>
+            ) : (
+              <>
+                <select
+                  value={selectedCommunity}
+                  onChange={(e) => setSelectedCommunity(e.target.value)}
+                  className="share-select"
+                >
+                  <option value="">Select community…</option>
+                  {communities.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+
+                <button className="share-btn" onClick={handleShare} disabled={!selectedCommunity}>
+                  Share
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
 
-      {/* FULL ARTICLE MODAL */}
-      {showModal && isUserArticle && !isChatView && (
-        <FullArticleModal article={article} onClose={() => setShowModal(false)} currentUserId={currentUserId} />
+      {showModal && isInternalArticle && !isChatView && (
+        <FullArticleModal
+          article={article}
+          onClose={() => setShowModal(false)}
+          currentUserId={currentUserId}
+        />
       )}
     </>
   );

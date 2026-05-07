@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import ArticleCard from "../components/ArticleCard";
-
+import API from "../utils/api";
 
 const TIERS = [
   { min: 85, label: "Authority",      color: "#7C3AED", bg: "#EDE9FE", icon: "◆" },
@@ -71,7 +71,7 @@ function CredibilityBadge({ userId }) {
   const [open, setOpen] = useState(false);
   useEffect(() => {
     if (!userId) return;
-    axios.get(`/auth/${userId}/credibility`).then((r) => setData(r.data)).catch(() => {});
+    API.get(`/auth/${userId}/credibility`,{ withCredentials: true }).then((r) => setData(r.data)).catch(() => {});
   }, [userId]);
   if (!data) return null;
   const tier = getTier(data.total);
@@ -152,7 +152,7 @@ function CommunityPulse({ communityId }) {
   const [lastUpdated, setLastUpdated] = useState(null);
   const iv = useRef(null);
   const fetch = useCallback(async () => {
-    try { const r = await axios.get(`/communities/${communityId}/pulse`); setData(r.data); setLastUpdated(new Date()); }
+    try { const r = await API.get(`/communities/${communityId}/pulse`,{ withCredentials: true }); setData(r.data); setLastUpdated(new Date()); }
     catch { } finally { setLoading(false); }
   }, [communityId]);
   useEffect(() => { fetch(); iv.current = setInterval(fetch, 30000); return () => clearInterval(iv.current); }, [fetch]);
@@ -287,7 +287,7 @@ function VerdictPanel({ communityId, currentUserId, isMod, isOwner }) {
     if (!topic.trim()) return;
     try {
       setCreating(true);
-      await axios.post(`/api/communities/${communityId}/verdicts`, { topic: topic.trim(), durationHours: duration }, { withCredentials: true });
+      await API.post(`/api/communities/${communityId}/verdicts`, { topic: topic.trim(), durationHours: duration }, { withCredentials: true });
       showToast("Verdict created!");
       setTopic(""); setShowCreate(false); fetchVerdicts();
     } catch (err) { showToast(err.response?.data?.message || "Failed to create verdict", "error"); }
@@ -296,7 +296,7 @@ function VerdictPanel({ communityId, currentUserId, isMod, isOwner }) {
 
   const handleVote = async (verdictId, side) => {
     try {
-      await axios.post(`/api/communities/${communityId}/verdicts/${verdictId}/vote`, { side }, { withCredentials: true });
+      await API.post(`/api/communities/${communityId}/verdicts/${verdictId}/vote`, { side }, { withCredentials: true });
       showToast(`Voted ${side}!`); fetchVerdicts();
     } catch (err) { showToast(err.response?.data?.message || "Failed to vote", "error"); }
   };
@@ -368,13 +368,13 @@ function LeaderboardPanel({ communityId, isMod, isOwner }) {
   const navigate                = useNavigate();
 
   const fetchLeaderboard = async () => {
-    try { const r = await axios.get(`/api/communities/${communityId}/leaderboard`, { withCredentials: true }); setEntries(r.data); }
+    try { const r = await API.get(`/api/communities/${communityId}/leaderboard`, { withCredentials: true }); setEntries(r.data); }
     catch { } finally { setLoading(false); }
   };
 
   const handleRefresh = async () => {
     setLoading(true);
-    try { await axios.post(`/api/communities/${communityId}/leaderboard/refresh`, {}, { withCredentials: true }); await fetchLeaderboard(); }
+    try { await API.post(`/api/communities/${communityId}/leaderboard/refresh`, {}, { withCredentials: true }); await fetchLeaderboard(); }
     catch { setLoading(false); }
   };
 
@@ -455,7 +455,7 @@ function EnhancedSendBox({ onSend }) {
     if (!url.trim()) { setVerif(null); return; }
     setVerifying(true);
     try {
-      const r = await axios.get(`/api/verify-source?url=${encodeURIComponent(url)}`, { withCredentials: true });
+      const r = await APT.get(`/api/verify-source?url=${encodeURIComponent(url)}`, { withCredentials: true });
       setVerif(r.data);
     } catch { setVerif(null); } finally { setVerifying(false); }
   };
@@ -584,7 +584,7 @@ const CommunityDetailPage = ({ currentUserId }) => {
     catch (e) { console.error(e); }
   };
   const fetchDiscussions = async () => {
-    try { const r = await axios.get(`/api/communities/${id}/discussions`); setDiscussions(r.data); }
+    try { const r = await API.get(`/api/communities/${id}/discussions`); setDiscussions(r.data); }
     catch (e) { console.error(e); }
   };
 
@@ -593,25 +593,25 @@ const CommunityDetailPage = ({ currentUserId }) => {
   const isOwner  = community?.owner?.toString() === currentUserId;
 
   const handleJoin = async () => {
-    try { setJoining(true); await axios.post(`/communities/join`, { communityId: id }, { withCredentials: true }); await fetchCommunity(); showToast("Joined community!"); }
+    try { setJoining(true); await API.post(`/communities/join`, { communityId: id }, { withCredentials: true }); await fetchCommunity(); showToast("Joined community!"); }
     catch { showToast("Failed to join", "error"); } finally { setJoining(false); }
   };
   const handleLeave = async () => {
     if (!window.confirm("Leave this community?")) return;
-    try { setAction(true); await axios.post(`/communities/leave`, { communityId: id }, { withCredentials: true }); showToast("Left community"); navigate("/communities"); }
+    try { setAction(true); await API.post(`/communities/leave`, { communityId: id }, { withCredentials: true }); showToast("Left community"); navigate("/communities"); }
     catch (e) { showToast(e.response?.data?.message || "Failed", "error"); } finally { setAction(false); }
   };
 
   // Enhanced send with claim type + source
   const handleSend = async ({ message, claimType, sourceUrl }) => {
     try {
-      await axios.post(`/api/communities/${id}/discussions`, { message, claimType, sourceUrl }, { withCredentials: true });
+      await API.post(`/api/communities/${id}/discussions`, { message, claimType, sourceUrl }, { withCredentials: true });
       fetchDiscussions();
     } catch (e) { console.error(e); }
   };
 
   const handleShareArticle = async (article) => {
-    try { await axios.post(`/communities/${id}/share-article`, { articleId: article._id }, { withCredentials: true }); showToast("Shared!"); fetchDiscussions(); setActiveTab("discussion"); }
+    try { await API.post(`/communities/${id}/share-article`, { articleId: article._id }, { withCredentials: true }); showToast("Shared!"); fetchDiscussions(); setActiveTab("discussion"); }
     catch { showToast("Failed to share", "error"); }
   };
   const handleAddMembers = async () => {
@@ -764,9 +764,9 @@ const CommunityDetailPage = ({ currentUserId }) => {
                     {/* Vote row */}
                     {!isMe && (
                       <div className="flex items-center gap-3 mt-2">
-                        <button onClick={() => axios.post(`/api/communities/${id}/discussions/${d._id}/vote`, { vote: "up" }, { withCredentials: true }).then(fetchDiscussions)}
+                        <button onClick={() => API.post(`/api/communities/${id}/discussions/${d._id}/vote`, { vote: "up" }, { withCredentials: true }).then(fetchDiscussions)}
                           className="text-xs text-gray-400 hover:text-green-600 transition">▲ {d.upvotes?.length || 0}</button>
-                        <button onClick={() => axios.post(`/api/communities/${id}/discussions/${d._id}/vote`, { vote: "down" }, { withCredentials: true }).then(fetchDiscussions)}
+                        <button onClick={() => API.post(`/api/communities/${id}/discussions/${d._id}/vote`, { vote: "down" }, { withCredentials: true }).then(fetchDiscussions)}
                           className="text-xs text-gray-400 hover:text-red-500 transition">▼ {d.downvotes?.length || 0}</button>
                       </div>
                     )}

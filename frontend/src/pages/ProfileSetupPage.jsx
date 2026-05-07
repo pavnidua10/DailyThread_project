@@ -471,13 +471,29 @@ const ProfilePage = () => {
               {activeTab === 'articles' &&
                 (articles.length === 0
                   ? <div className="empty-state"><div className="empty-icon">📝</div><p>You haven't written any articles yet.</p></div>
-                  : articles.map(a => <ArticleCard key={a._id} article={a} currentUserId={null} onSaveToggle={handleSaveToggle} isSavedTab={false} />))
+                  :articles.map(a => (
+  <ArticleCard
+    key={a._id}
+    article={a}
+    currentUserId={userId}
+    onSaveToggle={handleSaveToggle}
+    isSavedTab={false}
+  />
+)))
               }
 
               {activeTab === 'saved' &&
                 (savedArticles.length === 0
                   ? <div className="empty-state"><div className="empty-icon">🔖</div><p>No saved articles yet.</p></div>
-                  : savedArticles.map(a => <ArticleCard key={a._id} article={a} currentUserId={null} onSaveToggle={handleSaveToggle} isSavedTab={true} />))
+                  : savedArticles.map(a => (
+  <ArticleCard
+    key={a._id}
+    article={a}
+    currentUserId={userId}
+    onSaveToggle={handleSaveToggle}
+    isSavedTab={true}
+  />
+)))
               }
             </div>
           )}

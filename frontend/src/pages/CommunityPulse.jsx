@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
-
+import API from "../utils/api";
 // ─── Sentiment config ─────────────────────────────────────────────
 const SENTIMENT_ZONES = [
   { min: 80, label: "Euphoric",    emoji: "🔥", color: "#7C3AED", bg: "#EDE9FE", textColor: "#5B21B6" },
@@ -157,7 +157,7 @@ export default function CommunityPulse({ communityId }) {
 
   const fetchPulse = useCallback(async () => {
     try {
-      const res = await axios.get(`/communities/${communityId}/pulse`);
+      const res = await API.get(`/communities/${communityId}/pulse`,{ withCredentials: true });
       setData(res.data);
       setLastUpdated(new Date());
     } catch (err) {

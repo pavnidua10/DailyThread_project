@@ -7,41 +7,40 @@ import { useNavigate } from "react-router-dom";
 const SearchUsersPage = ({ currentUserId }) => {
   const [activeTab, setActiveTab] = useState("users");
 
-  // USERS
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [searchedUserId, setSearchedUserId] = useState(null);
 
-  // COMMUNITIES
   const [communityQuery, setCommunityQuery] = useState("");
   const [communities, setCommunities] = useState([]);
   const [joiningId, setJoiningId] = useState(null);
 
   const navigate = useNavigate();
 
+  const normalizedCurrentUserId = currentUserId?.toString();
+
+  const normalizeId = (value) =>
+    typeof value === "object" && value !== null ? value._id?.toString() : value?.toString();
+
   useEffect(() => {
     fetchSuggestedUsers();
     fetchAllCommunities();
   }, []);
-
-  // ---------------- USERS ----------------
 
   const fetchSuggestedUsers = async () => {
     try {
       const res = await API.get("/profiles/suggested", {
         withCredentials: true,
       });
-      setSuggestedUsers(res.data);
+      setSuggestedUsers(res.data || []);
     } catch (error) {
       console.error(error);
     }
   };
 
-  // ---------------- COMMUNITIES ----------------
-
   const fetchAllCommunities = async () => {
     try {
       const res = await API.get("/communities/search?query=");
-      setCommunities(res.data);
+      setCommunities(res.data || []);
     } catch (err) {
       console.error(err);
     }
@@ -49,10 +48,8 @@ const SearchUsersPage = ({ currentUserId }) => {
 
   const searchCommunities = async () => {
     try {
-      const res = await API.get(
-        `/communities/search?query=${communityQuery}`
-      );
-      setCommunities(res.data);
+      const res = await API.get(`/communities/search?query=${communityQuery}`);
+      setCommunities(res.data || []);
     } catch (err) {
       console.error(err);
     }
@@ -66,7 +63,6 @@ const SearchUsersPage = ({ currentUserId }) => {
         communityId,
       });
 
-      // update UI immediately
       setCommunities((prev) =>
         prev.map((c) =>
           c._id === communityId
@@ -82,23 +78,16 @@ const SearchUsersPage = ({ currentUserId }) => {
   };
 
   const isUserMember = (community) => {
-    return community.members?.some(
-      (m) => m._id === currentUserId
-    );
+    return community.members?.some((m) => normalizeId(m) === normalizedCurrentUserId);
   };
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
-
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Discover</h1>
-        <p className="text-gray-500">
-          Find people and communities
-        </p>
+        <p className="text-gray-500">Find people and communities</p>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-6 mb-10 border-b pb-3">
         <button
           onClick={() => setActiveTab("users")}
@@ -123,7 +112,6 @@ const SearchUsersPage = ({ currentUserId }) => {
         </button>
       </div>
 
-      {/* ================= USERS TAB ================= */}
       {activeTab === "users" && (
         <>
           {searchedUserId ? (
@@ -146,9 +134,7 @@ const SearchUsersPage = ({ currentUserId }) => {
                 <UserSearchBar onUserClick={setSearchedUserId} />
               </div>
 
-              <h2 className="text-2xl font-semibold mb-6">
-                Suggested Users
-              </h2>
+              <h2 className="text-2xl font-semibold mb-6">Suggested Users</h2>
 
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {suggestedUsers.map((user) => (
@@ -166,12 +152,8 @@ const SearchUsersPage = ({ currentUserId }) => {
                         className="w-14 h-14 rounded-full object-cover"
                       />
                       <div>
-                        <h3 className="font-semibold">
-                          {user.name}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {user.email}
-                        </p>
+                        <h3 className="font-semibold">{user.name}</h3>
+                        <p className="text-sm text-gray-500">{user.email}</p>
                       </div>
                     </div>
 
@@ -189,18 +171,14 @@ const SearchUsersPage = ({ currentUserId }) => {
         </>
       )}
 
-      {/* ================= COMMUNITIES TAB ================= */}
       {activeTab === "communities" && (
         <>
-          {/* Search */}
           <div className="flex gap-3 mb-8">
             <input
               type="text"
               placeholder="Search communities..."
               value={communityQuery}
-              onChange={(e) =>
-                setCommunityQuery(e.target.value)
-              }
+              onChange={(e) => setCommunityQuery(e.target.value)}
               className="flex-1 border rounded-lg px-4 py-2"
             />
             <button
@@ -211,7 +189,6 @@ const SearchUsersPage = ({ currentUserId }) => {
             </button>
           </div>
 
-          {/* Community List */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {communities.map((community) => {
               const joined = isUserMember(community);
@@ -221,9 +198,7 @@ const SearchUsersPage = ({ currentUserId }) => {
                   key={community._id}
                   className="bg-white rounded-xl shadow-md p-6"
                 >
-                  <h3 className="text-lg font-semibold mb-2">
-                    {community.name}
-                  </h3>
+                  <h3 className="text-lg font-semibold mb-2">{community.name}</h3>
 
                   <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                     {community.description}
@@ -235,9 +210,7 @@ const SearchUsersPage = ({ currentUserId }) => {
 
                   <div className="flex justify-between items-center">
                     <button
-                      onClick={() =>
-                        navigate(`/communities/${community._id}`)
-                      }
+                      onClick={() => navigate(`/communities/${community._id}`)}
                       className="text-blue-600 text-sm hover:underline"
                     >
                       View
@@ -249,17 +222,11 @@ const SearchUsersPage = ({ currentUserId }) => {
                       </button>
                     ) : (
                       <button
-                        onClick={() =>
-                          handleJoin(community._id)
-                        }
-                        disabled={
-                          joiningId === community._id
-                        }
+                        onClick={() => handleJoin(community._id)}
+                        disabled={joiningId === community._id}
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"
                       >
-                        {joiningId === community._id
-                          ? "Joining..."
-                          : "Join"}
+                        {joiningId === community._id ? "Joining..." : "Join"}
                       </button>
                     )}
                   </div>
