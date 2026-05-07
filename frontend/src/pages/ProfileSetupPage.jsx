@@ -240,7 +240,7 @@ const ProfilePage = () => {
         API.get('/articles/articles/saved'),
       ]);
       const u = profileRes.data;
-      setUserId(u._id);
+      setUserId(u.userId|| u._id);
       setProfile({
         name: u.name || '',
         bio: u.bio || '',

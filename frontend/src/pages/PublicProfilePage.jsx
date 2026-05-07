@@ -1,13 +1,17 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import API from "../utils/api";
 import ArticleCard from '../components/ArticleCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { FaPencilAlt, FaTrash } from 'react-icons/fa';
 
+
 export let refreshMyProfile = () => {};
+
 
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+
 
   :root {
     --ink: #0f0e17;
@@ -23,14 +27,18 @@ const STYLES = `
     --shadow-lg: 0 12px 48px rgba(15,14,23,.14);
   }
 
+
   .profile-root { font-family:'DM Sans',sans-serif; background:var(--paper); min-height:100vh; color:var(--ink); }
+
 
   .profile-banner { position:relative; height:220px; background:linear-gradient(135deg,#1a1a2e 0%,#16213e 40%,#c8553d 100%); overflow:hidden; }
   .profile-banner::before { content:''; position:absolute; inset:0; background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
   .profile-banner-blob { position:absolute; width:400px; height:400px; border-radius:50%; background:radial-gradient(circle,rgba(200,85,61,.35) 0%,transparent 70%); top:-120px; right:-80px; pointer-events:none; }
 
+
   .profile-card { position:relative; background:var(--white); border-radius:24px; box-shadow:var(--shadow-lg); margin:-64px 32px 0; padding:40px 40px 32px; border:1px solid var(--border); }
   @media(max-width:640px){ .profile-card { margin:-48px 12px 0; padding:28px 20px 24px; } }
+
 
   .avatar-wrap { position:relative; width:120px; height:120px; flex-shrink:0; }
   .avatar-ring { position:absolute; inset:-4px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent2)); z-index:0; }
@@ -42,14 +50,17 @@ const STYLES = `
   .avatar-btn:hover { transform:scale(1.12); box-shadow:0 4px 14px rgba(0,0,0,.18); }
   .avatar-uploading { position:absolute; inset:0; border-radius:50%; background:rgba(255,255,255,.72); display:flex; align-items:center; justify-content:center; z-index:12; font-size:11px; font-weight:600; color:var(--accent); letter-spacing:.04em; }
 
+
   .profile-name { font-family:'Playfair Display',serif; font-size:32px; font-weight:900; letter-spacing:-.02em; line-height:1.1; color:var(--ink); }
   .profile-email { font-size:14px; color:var(--muted); font-weight:400; margin-top:2px; }
   .profile-bio { font-size:15px; color:#555; line-height:1.6; margin-top:8px; font-style:italic; }
+
 
   .stats-row { display:flex; gap:32px; margin-top:20px; padding-top:20px; border-top:1px solid var(--border); flex-wrap:wrap; }
   .stat-item { display:flex; flex-direction:column; gap:2px; }
   .stat-num { font-family:'Playfair Display',serif; font-size:28px; font-weight:700; color:var(--accent); line-height:1; }
   .stat-label { font-size:12px; color:var(--muted); font-weight:500; letter-spacing:.06em; text-transform:uppercase; }
+
 
   .btn-edit { padding:10px 22px; background:var(--ink); color:var(--white); border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:background .2s,transform .15s; white-space:nowrap; }
   .btn-edit:hover { background:var(--accent); transform:translateY(-1px); }
@@ -58,21 +69,26 @@ const STYLES = `
   .btn-cancel { padding:10px 22px; background:transparent; color:var(--muted); border:1.5px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:border-color .2s,color .2s; }
   .btn-cancel:hover { border-color:var(--ink); color:var(--ink); }
 
+
   .edit-field label { display:block; font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
   .edit-field input, .edit-field textarea { width:100%; border:1.5px solid var(--border); border-radius:10px; padding:10px 14px; font-family:'DM Sans',sans-serif; font-size:15px; color:var(--ink); background:var(--paper); transition:border-color .2s,box-shadow .2s; outline:none; resize:vertical; box-sizing:border-box; }
   .edit-field input:focus, .edit-field textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(200,85,61,.12); }
   .msg-success { font-size:13px; color:#2d7d5a; font-weight:500; }
 
+
   .tabs-wrap { display:flex; gap:4px; background:var(--cream); border-radius:14px; padding:5px; width:fit-content; margin:36px auto 32px; overflow-x:auto; }
   .tab-btn { padding:10px 22px; border-radius:10px; border:none; background:transparent; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; color:var(--muted); cursor:pointer; transition:background .2s,color .2s,box-shadow .2s; white-space:nowrap; }
   .tab-btn.active { background:var(--white); color:var(--ink); box-shadow:0 2px 10px rgba(15,14,23,.1); }
+
 
   .articles-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:24px; padding:0 0 48px; }
   .empty-state { grid-column:1/-1; text-align:center; padding:64px 20px; color:var(--muted); }
   .empty-icon { font-size:48px; margin-bottom:12px; opacity:.4; }
   .empty-state p { font-size:16px; font-weight:500; }
 
+
   .profile-outer { max-width:900px; margin:0 auto; padding-bottom:64px; }
+
 
   .cred-panel { background:var(--white); border-radius:20px; border:1px solid var(--border); box-shadow:var(--shadow); padding:28px; margin:0 0 24px; }
   .cred-tier-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 14px; border-radius:999px; font-size:13px; font-weight:700; letter-spacing:.02em; }
@@ -80,17 +96,21 @@ const STYLES = `
   .cred-bar-track { height:7px; border-radius:999px; background:var(--cream); overflow:hidden; flex:1; }
   .cred-bar-fill { height:100%; border-radius:999px; transition:width .8s cubic-bezier(.4,0,.2,1); }
 
+
   .achievement-badge { display:flex; flex-direction:column; align-items:center; gap:5px; padding:14px 10px; border-radius:14px; border:1px solid var(--border); background:var(--paper); min-width:80px; transition:transform .15s,box-shadow .15s; }
   .achievement-badge:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(15,14,23,.1); }
   .achievement-badge.locked { opacity:.4; filter:grayscale(1); }
+
 
   .timeline-item { display:flex; gap:14px; padding:12px 0; border-bottom:1px solid var(--border); }
   .timeline-item:last-child { border-bottom:none; }
   .timeline-icon { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:14px; }
 
+
   @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
   .fade-up { animation:fadeUp .4s ease both; }
 `;
+
 
 const TIERS = [
   { min: 85, label: 'Authority', color: '#7C3AED', bg: '#EDE9FE', icon: '◆' },
@@ -100,9 +120,11 @@ const TIERS = [
   { min: 0, label: 'Newcomer', color: '#6B7280', bg: '#F3F4F6', icon: '·' },
 ];
 
+
 function getTier(score) {
   return TIERS.find(t => score >= t.min) || TIERS[4];
 }
+
 
 const BREAKDOWN_META = [
   { key: 'articleQuality', label: 'Article quality', max: 30, icon: '✍️', desc: 'Based on avg rating of your published articles' },
@@ -111,6 +133,7 @@ const BREAKDOWN_META = [
   { key: 'consistencyBonus', label: 'Consistency', max: 15, icon: '📅', desc: 'Regular posting, no moderation flags' },
   { key: 'debateScore', label: 'Debate quality', max: 10, icon: '⚖️', desc: 'Net votes on your debate arguments' },
 ];
+
 
 const ACHIEVEMENTS = [
   { id: 'first_article', icon: '✍️', label: 'First Article', desc: 'Published your first article', check: (d) => (d?.articlesPublished || 0) >= 1 },
@@ -122,6 +145,7 @@ const ACHIEVEMENTS = [
   { id: 'authority', icon: '◆', label: 'Authority', desc: 'Reached Authority tier (85+)', check: (d) => (d?.total || 0) >= 85 },
   { id: 'community_loved', icon: '❤️', label: 'Community Loved', desc: '20+ peer endorsements', check: (d) => (d?.endorsedBy || 0) >= 20 },
 ];
+
 
 function ScoreArc({ score, color, size = 100 }) {
   const r = size * 0.38;
@@ -164,6 +188,7 @@ function ScoreArc({ score, color, size = 100 }) {
   );
 }
 
+
 function CredibilityPanel({ credData, loading }) {
   const [activeBreakdown, setActiveBreakdown] = useState(null);
 
@@ -172,7 +197,7 @@ function CredibilityPanel({ credData, loading }) {
       <div className="cred-panel" style={{ display:'flex', alignItems:'center', justifyContent:'center', height:160, gap:10 }}>
         <div style={{ width:20, height:20, border:'3px solid var(--accent)', borderTopColor:'transparent', borderRadius:'50%', animation:'spin .8s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-        <span style={{ color:'var(--muted)', fontSize:13 }}>Computing your credibility…</span>
+        <span style={{ color:'var(--muted)', fontSize:13 }}>Computing credibility…</span>
       </div>
     );
   }
@@ -184,7 +209,7 @@ function CredibilityPanel({ credData, loading }) {
           Credibility
         </h3>
         <p style={{ fontSize:13, color:'var(--muted)', margin:0 }}>
-          Could not load your credibility data right now.
+          Could not load credibility data right now.
         </p>
       </div>
     );
@@ -200,7 +225,7 @@ function CredibilityPanel({ credData, loading }) {
       <div style={{ display:'flex', justifyContent:'space-between', gap:24, flexWrap:'wrap', alignItems:'center' }}>
         <div style={{ flex:'1 1 340px' }}>
           <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:24, fontWeight:800, margin:'0 0 8px', color:'var(--ink)' }}>
-            Your credibility
+            Credibility
           </h3>
           <p style={{ fontSize:14, color:'var(--muted)', margin:'0 0 18px' }}>
             Credibility grows from article quality, source discipline, consistency, trust, and debate participation.
@@ -266,6 +291,7 @@ function CredibilityPanel({ credData, loading }) {
   );
 }
 
+
 function AchievementsPanel({ credData }) {
   if (!credData) {
     return (
@@ -313,6 +339,7 @@ function AchievementsPanel({ credData }) {
   );
 }
 
+
 const ACTIVITY_CONFIG = {
   article_published: { icon:'✍️', color:'#0369A1', bg:'#E0F2FE', label:'Published an article' },
   debate_argument: { icon:'⚖️', color:'#7C3AED', bg:'#EDE9FE', label:'Argued in debate' },
@@ -320,6 +347,7 @@ const ACTIVITY_CONFIG = {
   community_joined: { icon:'👥', color:'#D97706', bg:'#FEF3C7', label:'Joined a community' },
   endorsement_received: { icon:'⭐', color:'#C8553D', bg:'#FEF3C7', label:'Received endorsement' },
 };
+
 
 function ActivityTimeline({ userId }) {
   const [activity, setActivity] = useState([]);
@@ -334,7 +362,7 @@ function ActivityTimeline({ userId }) {
   }, [userId]);
 
   if (loading) return <div style={{ textAlign:'center', padding:24, color:'var(--muted)', fontSize:13 }}>Loading activity…</div>;
-  if (!activity.length) return <div style={{ textAlign:'center', padding:24, color:'var(--muted)', fontSize:13 }}>No activity yet. Start contributing!</div>;
+  if (!activity.length) return <div style={{ textAlign:'center', padding:24, color:'var(--muted)', fontSize:13 }}>No activity yet.</div>;
 
   return (
     <div style={{ display:'flex', flexDirection:'column' }}>
@@ -361,7 +389,13 @@ function ActivityTimeline({ userId }) {
   );
 }
 
+
 const ProfilePage = () => {
+  // If :id is present in the URL, we're viewing someone else's profile.
+  // If not, we're viewing the logged-in user's own profile.
+  const { id } = useParams();
+  const isOwnProfile = !id;
+
   const [profile, setProfile] = useState({ name:'', bio:'', email:'', profilePhoto:'', followers:[], following:[] });
   const [loading, setLoading] = useState(true);
   const [credLoading, setCredLoading] = useState(false);
@@ -374,46 +408,73 @@ const ProfilePage = () => {
   const [userId, setUserId] = useState(null);
   const [credData, setCredData] = useState(null);
 
-  const fetchMyProfile = useCallback(async () => {
+
+  const fetchProfile = useCallback(async () => {
     try {
       setLoading(true);
 
-      const [profileRes, articlesRes, savedRes] = await Promise.all([
-        API.get('/profiles/me'),
-        API.get('/articles/articles/by-author'),
-        API.get('/articles/articles/saved'),
-      ]);
+      if (isOwnProfile) {
+        // ── Own profile ──────────────────────────────────────────
+        const [profileRes, articlesRes, savedRes] = await Promise.all([
+          API.get('/profiles/me'),
+          API.get('/articles/articles/by-author'),
+          API.get('/articles/articles/saved'),
+        ]);
 
-      const u = profileRes.data;
+        const u = profileRes.data;
+        setUserId(u._id);
+        setProfile({
+          name: u.name || '',
+          bio: u.bio || '',
+          email: u.email || '',
+          profilePhoto: u.profilePhoto || '',
+          followers: u.followers || [],
+          following: u.following || [],
+        });
+        setArticles(articlesRes.data || []);
+        setSavedArticles(savedRes.data || []);
+      } else {
+        // ── Public profile by id ─────────────────────────────────
+        const profileRes = await API.get(`/auth/profile/${id}`);
+        const u = profileRes.data;
+        setUserId(u._id);
+        setProfile({
+          name: u.name || '',
+          bio: u.bio || '',
+          email: u.email || '',
+          profilePhoto: u.profilePhoto || '',
+          followers: u.followers || [],
+          following: u.following || [],
+        });
 
-      setUserId(u._id);
-      setProfile({
-        name: u.name || '',
-        bio: u.bio || '',
-        email: u.email || '',
-        profilePhoto: u.profilePhoto || '',
-        followers: u.followers || [],
-        following: u.following || [],
-      });
+        // Fetch this user's public articles.
+        // Adjust the endpoint below if your backend uses a different route.
+        try {
+          const articlesRes = await API.get(`/articles/articles/by-author/${id}`);
+          setArticles(articlesRes.data || []);
+        } catch {
+          setArticles([]);
+        }
 
-      setArticles(articlesRes.data || []);
-      setSavedArticles(savedRes.data || []);
+        // Saved articles are private — don't fetch for other users
+        setSavedArticles([]);
+      }
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [id, isOwnProfile]);
 
-  const fetchCredibility = useCallback(async (id) => {
-    if (!id) {
+
+  const fetchCredibility = useCallback(async (uid) => {
+    if (!uid) {
       setCredData(null);
       return;
     }
-
     try {
       setCredLoading(true);
-      const res = await API.get(`/auth/${id}/credibility`);
+      const res = await API.get(`/auth/${uid}/credibility`);
       setCredData(res.data || null);
     } catch (e) {
       console.error("Failed to load credibility:", e);
@@ -423,21 +484,25 @@ const ProfilePage = () => {
     }
   }, []);
 
-  refreshMyProfile = fetchMyProfile;
+
+  // Expose refresh function only for own profile
+  refreshMyProfile = isOwnProfile ? fetchProfile : () => {};
+
 
   useEffect(() => {
-    fetchMyProfile();
-  }, [fetchMyProfile]);
+    fetchProfile();
+  }, [fetchProfile]);
+
 
   useEffect(() => {
-    if (userId) {
-      fetchCredibility(userId);
-    }
+    if (userId) fetchCredibility(userId);
   }, [userId, fetchCredibility]);
+
 
   const handleChange = (e) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -445,12 +510,13 @@ const ProfilePage = () => {
       await API.put('/profiles/profile', { name: profile.name, bio: profile.bio });
       setMessage('Profile updated!');
       setIsEditing(false);
-      fetchMyProfile();
+      fetchProfile();
       if (userId) fetchCredibility(userId);
     } catch {
       setMessage('Failed to update profile.');
     }
   };
+
 
   const handleSaveToggle = async () => {
     try {
@@ -459,23 +525,18 @@ const ProfilePage = () => {
     } catch {}
   };
 
+
   const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setUploading(true);
     try {
       const fd = new FormData();
       fd.append("image", file);
-
       const res = await API.post("/auth/profile-image", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
-      setProfile((p) => ({
-        ...p,
-        profilePhoto: res.data.profilePhoto || "",
-      }));
+      setProfile((p) => ({ ...p, profilePhoto: res.data.profilePhoto || "" }));
     } catch (error) {
       console.error(error);
     } finally {
@@ -483,6 +544,7 @@ const ProfilePage = () => {
       e.target.value = "";
     }
   };
+
 
   const handleDeletePhoto = async () => {
     try {
@@ -493,23 +555,29 @@ const ProfilePage = () => {
     }
   };
 
+
   if (loading) return <LoadingSpinner />;
+
 
   const tier = credData ? getTier(credData.total || 0) : null;
 
+
+  // Own profile shows all tabs; public profile hides "Saved"
   const TABS = [
     { key:'credibility', label:'⭐ Credibility' },
     { key:'achievements', label:'🏅 Achievements' },
     { key:'activity', label:'📋 Activity' },
-    { key:'articles', label:'✍️ Your Articles' },
-    { key:'saved', label:'🔖 Saved' },
+    { key:'articles', label:'✍️ Articles' },
+    ...(isOwnProfile ? [{ key:'saved', label:'🔖 Saved' }] : []),
   ];
+
 
   const getImageUrl = (photoPath) => {
     if (!photoPath) return "";
     if (photoPath.startsWith("http")) return photoPath;
     return `http://localhost:5001${photoPath}`;
   };
+
 
   return (
     <>
@@ -520,6 +588,8 @@ const ProfilePage = () => {
         <div className="profile-outer">
           <div className="profile-card">
             <div style={{ display:'flex', gap:32, alignItems:'flex-start', flexWrap:'wrap' }}>
+
+              {/* ── Avatar ── */}
               <div className="avatar-wrap" style={{ marginTop:-56 }}>
                 <div className="avatar-ring" />
                 <div className="avatar-inner">
@@ -530,36 +600,40 @@ const ProfilePage = () => {
                   )}
                 </div>
 
-                <div className="avatar-actions">
-                  <label className="avatar-btn" title="Change photo">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoChange}
-                      style={{ display:'none' }}
-                    />
-                    <FaPencilAlt size={11} color="#c8553d" />
-                  </label>
+                {/* Only show upload/delete controls on own profile */}
+                {isOwnProfile && (
+                  <div className="avatar-actions">
+                    <label className="avatar-btn" title="Change photo">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoChange}
+                        style={{ display:'none' }}
+                      />
+                      <FaPencilAlt size={11} color="#c8553d" />
+                    </label>
 
-                  {profile.profilePhoto && (
-                    <button
-                      className="avatar-btn"
-                      onClick={handleDeletePhoto}
-                      title="Remove photo"
-                      type="button"
-                    >
-                      <FaTrash size={11} color="#c8553d" />
-                    </button>
-                  )}
-                </div>
+                    {profile.profilePhoto && (
+                      <button
+                        className="avatar-btn"
+                        onClick={handleDeletePhoto}
+                        title="Remove photo"
+                        type="button"
+                      >
+                        <FaTrash size={11} color="#c8553d" />
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {uploadingPhoto && <div className="avatar-uploading">Uploading…</div>}
               </div>
 
+              {/* ── Info ── */}
               <div style={{ flex:1, minWidth:220 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:16, flexWrap:'wrap' }}>
                   <div>
-                    <h2 className="profile-name">{profile.name || 'Your Name'}</h2>
+                    <h2 className="profile-name">{profile.name || 'User'}</h2>
                     <p className="profile-email">{profile.email}</p>
 
                     {tier && credData && (
@@ -569,14 +643,16 @@ const ProfilePage = () => {
                     )}
                   </div>
 
-                  {!isEditing && (
+                  {/* Edit button only on own profile */}
+                  {isOwnProfile && !isEditing && (
                     <button className="btn-edit" onClick={() => setIsEditing(true)} type="button">
                       Edit Profile
                     </button>
                   )}
                 </div>
 
-                {isEditing ? (
+                {/* Edit form — only for own profile */}
+                {isOwnProfile && isEditing ? (
                   <form onSubmit={handleSubmit} style={{ marginTop:20, display:'flex', flexDirection:'column', gap:16 }}>
                     <div className="edit-field">
                       <label>Name</label>
@@ -614,6 +690,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
+          {/* ── Tabs ── */}
           <div className="tabs-wrap">
             {TABS.map(({ key, label }) => (
               <button
@@ -633,7 +710,7 @@ const ProfilePage = () => {
           {activeTab === 'activity' && (
             <div className="cred-panel fade-up">
               <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:700, margin:'0 0 4px', color:'var(--ink)' }}>Activity</h3>
-              <p style={{ fontSize:13, color:'var(--muted)', margin:'0 0 20px' }}>Your recent contributions across the platform</p>
+              <p style={{ fontSize:13, color:'var(--muted)', margin:'0 0 20px' }}>Recent contributions across the platform</p>
               <ActivityTimeline userId={userId} />
             </div>
           )}
@@ -642,7 +719,7 @@ const ProfilePage = () => {
             <div className="articles-grid">
               {activeTab === 'articles' &&
                 (articles.length === 0
-                  ? <div className="empty-state"><div className="empty-icon">📝</div><p>You haven't written any articles yet.</p></div>
+                  ? <div className="empty-state"><div className="empty-icon">📝</div><p>No articles published yet.</p></div>
                   : articles.map(a => (
                       <ArticleCard
                         key={a._id}
@@ -654,7 +731,7 @@ const ProfilePage = () => {
                     )))
               }
 
-              {activeTab === 'saved' &&
+              {activeTab === 'saved' && isOwnProfile &&
                 (savedArticles.length === 0
                   ? <div className="empty-state"><div className="empty-icon">🔖</div><p>No saved articles yet.</p></div>
                   : savedArticles.map(a => (
@@ -674,5 +751,6 @@ const ProfilePage = () => {
     </>
   );
 };
+
 
 export default ProfilePage;
