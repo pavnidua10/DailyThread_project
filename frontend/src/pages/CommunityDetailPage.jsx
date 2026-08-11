@@ -587,6 +587,9 @@ const CommunityDetailPage = ({ currentUserId }) => {
     try { const r = await API.get(`/api/communities/${id}/discussions`); setDiscussions(r.data); }
     catch (e) { console.error(e); }
   };
+console.log("currentUserId:", currentUserId);
+console.log("members:", community?.members?.map(m => m._id?.toString()));
+console.log("isMember result:", community?.members?.some((m) => m._id?.toString() === currentUserId));
 
   const isMember = community?.members?.some((m) => m._id?.toString() === currentUserId);
   const isMod    = community?.moderators?.some((m) => m._id?.toString() === currentUserId);
